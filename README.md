@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/iwdgo/testingfiles)](https://goreportcard.com/report/github.com/iwdgo/testingfiles)
+
 # Testing when large output is expected
 
 This module provides a few func's for testing using files.
