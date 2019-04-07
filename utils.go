@@ -1,3 +1,4 @@
+// Package testingfiles provides primitives to use files as reference for testing
 package testingfiles
 
 import (
@@ -79,8 +80,7 @@ func ReadCloserToFile(fname string, content io.ReadCloser) error {
 }
 
 // FileCompare checks large outputs of a test when a file storage is more convenient or required.
-// File compares compares the content of files.
-// File names are their arguments. They are expected to be in the working directory.
+// Names of the files to compare are passed as arguments and searched in the working directory.
 func FileCompare(got, want string) error {
 	rfile, err := os.Open(want)
 	defer rfile.Close()
