@@ -20,3 +20,7 @@ tests will panic.
 
 To avoid overhead, the buffer can also be compared to a file.
 A file is produced with the reminder from the difference found.
+
+## Testing
+
+Testing is done through repository `github.com/iwdgo/largeoutput`  
