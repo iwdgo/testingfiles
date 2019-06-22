@@ -139,7 +139,8 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 		return fmt.Errorf("Func name not found")
 	}
 
-	b1, b2 := make([]byte, 1), make([]byte, 1)
+	b1 := make([]byte, 1)
+	var b2 byte
 	index := 0          // Index in file to locate error
 	for err != io.EOF { // Until the end of the file
 		_, err = wantf.Read(b1)
@@ -148,20 +149,20 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 				return err
 			}
 
-			_, err = got.Read(b2)
+			b2, err = got.ReadByte()
 			if err != nil { // If EOF produced file is too short
 				return err
 			}
 		}
 
-		if !bytes.Equal(b1, b2) {
+		if b1[0] != b2 {
 			BufferToFile(fmt.Sprintf("got_%s .html", funcname[1]), got)
 			return fmt.Errorf("got %q, want %q at %d", b1, b2, index)
 		}
 		index++
 	}
 	// EOF on want file has been reached
-	_, err = got.Read(b2)
+	b2, err = got.ReadByte()
 	if err != io.EOF { // If EOF produced file is too short
 		BufferToFile(fmt.Sprintf("got_%s .html", funcname[1]), got)
 		info, _ := wantf.Stat()
