@@ -102,7 +102,6 @@ func FileCompare(got, want string) error {
 			if err != nil {
 				return err
 			}
-
 			_, err = pfile.Read(b2)
 			if err != nil { // If EOF is returned, file is too short
 				return err
@@ -156,7 +155,7 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 		}
 
 		if b1[0] != b2 {
-			BufferToFile(fmt.Sprintf("got_%s .html", funcname[1]), got)
+			BufferToFile(fmt.Sprintf("got_%s", funcname[1]), got)
 			return fmt.Errorf("got %q, want %q at %d", b1, b2, index)
 		}
 		index++
@@ -164,9 +163,9 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 	// EOF on want file has been reached
 	b2, err = got.ReadByte()
 	if err != io.EOF { // If EOF produced file is too short
-		BufferToFile(fmt.Sprintf("got_%s .html", funcname[1]), got)
+		BufferToFile(fmt.Sprintf("got_%s", funcname[1]), got)
 		info, _ := wantf.Stat()
-		return fmt.Errorf("got file is too short by %d", info.Size()-int64(index))
+		return fmt.Errorf("got buffer is too short by %d", info.Size()-int64(index))
 	}
 	return nil
 }
