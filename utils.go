@@ -115,7 +115,7 @@ func FileCompare(got, want string) error {
 	}
 	// EOF on reference file has been reached, let us check the produced file
 	_, err = pfile.Read(b2)
-	if err != io.EOF { // If EOF is returned, file is too short
+	if err != io.EOF { // If EOF is not returned, produced file is shorter than reference
 		rfileInfo, _ := rfile.Stat()
 		return fmt.Errorf("got file is too short by %d", rfileInfo.Size()-int64(index))
 	}
@@ -131,7 +131,7 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 	}
 	defer wantf.Close()
 
-	// Finding caller name here to locate appropriate file
+	// Finding caller name to
 	i, _, _, _ := runtime.Caller(1) // Skipping the calling test
 	funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), ".")
 	if len(funcname) == 1 {
@@ -143,13 +143,14 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 	index := 0          // Index in file to locate error
 	for err != io.EOF { // Until the end of the file
 		_, err = wantf.Read(b1)
-		if err != io.EOF { // While not EOF, read the other file too
+		if err != io.EOF { // While not EOF, read the buffer
 			if err != nil {
-				return err
+				return err // error on file was not io.EOF
 			}
 
 			b2, err = got.ReadByte()
-			if err != nil { // If EOF produced file is too short
+			// If EOF is returned, buffer is too short and exhausted.
+			if err != nil {
 				return err
 			}
 		}
@@ -162,10 +163,10 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 	}
 	// EOF on want file has been reached
 	b2, err = got.ReadByte()
-	if err != io.EOF { // If EOF produced file is too short
+	// If EOF is not returned, buffer is longer than the file which is exhausted.
+	if err != io.EOF {
 		BufferToFile(fmt.Sprintf("got_%s", funcname[1]), got)
-		info, _ := wantf.Stat()
-		return fmt.Errorf("got buffer is too short by %d", info.Size()-int64(index))
+		return fmt.Errorf("got buffer is too long by %d", got.Len())
 	}
 	return nil
 }
