@@ -3,11 +3,12 @@
 
 # Testing when large output is expected
 
-This module provides a few func's for testing using files.
-A file is useful or needed because of the size of the output for instance.
+This module eases the use of reference files for testing.
+A reference file (want) is useful or needed because of the size of the output or for recording purposes.
 
-The suggested work method is to have reference files in a directory which becomes the working directory using OutputDir.
-Then the content is put in a file and files are compared.
+Supported work method is to place reference files in a working directory.
+Content is put in a file and files are compared.
+Compring a buffer (*bytes.Buffer or io.ReadCloser) is more efficient when feasible.
 
 ## Working directory
 
@@ -19,8 +20,9 @@ tests will panic.
 ## Buffer comparison
 
 To avoid overhead, the buffer can also be compared to a file.
-A file is produced with the reminder from the difference found.
+If comparison fails, a got file is produced with the reminder from the difference found.
 
 ## Testing
 
-Testing is done through repository `github.com/iwdgo/largeoutput`  
+Testing requires online access. No file is saved and the first test run will fail.
+Got file can be renamed into a want file.  
