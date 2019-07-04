@@ -207,13 +207,13 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 			n, err = got.Read(gotb)
 			// Requires git 2.22.0 on Windows
 			if err == io.EOF { // If EOF produced, buffer is too short
-				ReadCloserToFile(gotf, got) // only the reminder is in the file !
 				wantfInfo, _ := wantf.Stat()
 				// Last byte of the file is returned with io.EOF
 				if wantfInfo.Size()-int64(index) == 1 && n == 1 && gotb[0] == wantb[0] {
 					log.Println("last byte returned with io.EOF")
 					return nil
 				}
+				ReadCloserToFile(gotf, got) // only the reminder is in the file !
 				return fmt.Errorf("%s : got %v, want %q at %d. Buffer is missing %d",
 					funcname[1], err, wantb, index, wantfInfo.Size()-int64(index))
 			} else if err != nil && err != io.EOF {
