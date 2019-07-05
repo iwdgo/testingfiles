@@ -1,4 +1,6 @@
+// Network connectivity is required to get the page.
 // The first run of GetHTMLPage will fail and you can rename pagegot.html into pagewant.html
+
 package testingfiles
 
 import (
@@ -28,6 +30,7 @@ const (
 	myTech   = "MyTech"
 )
 
+// TODO Return []byte, *bytes.Buffer, ...
 func getTechHomePage() []byte {
 	resp, err := http.Get("https://about.google/intl/en_be/")
 	if err != nil {
@@ -47,7 +50,7 @@ func getHTMLPage() []byte {
 }
 
 //  Benchmark is about the file comparison
-func GetHTMLPageString() error {
+func GetPageStringToFile() error {
 	OutputDir("output")
 	pfileName := "pagegot.html"
 	StringToFile(pfileName, getHTMLPage())
@@ -60,7 +63,7 @@ func GetHTMLPageString() error {
 }
 
 /* Buffer to file, iso String. Then comparing files. No real gain */
-func GetHTMLPageBuffer() error {
+func GetPageBufferToFile() error {
 	OutputDir("output")
 	pfileName := "pagegot.html"
 	BufferToFile(pfileName, bytes.NewBuffer(getHTMLPage()))
@@ -72,8 +75,8 @@ func GetHTMLPageBuffer() error {
 	}
 }
 
-/* No got file. Comparing buffer to want file. Got file created only if different */
-func GetHTMLPageBufferNoGotFile() error {
+// No got file. Comparing buffer to want file. Got file created only if different
+func GetPageBufferCompareNoGotFile() error {
 	OutputDir("output") // for want file
 	i, _, _, _ := runtime.Caller(0)
 	if funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), "."); len(funcname) == 1 {
@@ -83,51 +86,45 @@ func GetHTMLPageBufferNoGotFile() error {
 	}
 }
 
-/* go test -run=TestGetHTMLPageString */
+// Tests
 func TestGetHTMLPageString(t *testing.T) {
-	if err := GetHTMLPageString(); err != nil {
+	if err := GetPageStringToFile(); err != nil {
 		t.Error(err)
 	}
 }
 
-/* go test -bench=GetHTMLPageString */
-func BenchmarkGetHTMLPageString(b *testing.B) {
-	// run the function b.N times
-	for n := 0; n < b.N; n++ {
-		if err := GetHTMLPageString(); err != nil {
-			b.Fatal(err)
-		}
-	}
-}
-
-/* go test -run=TestGetHTMLPageBuffer */
 func TestGetHTMLPageBuffer(t *testing.T) {
-	if err := GetHTMLPageBuffer(); err != nil {
+	if err := GetPageBufferToFile(); err != nil {
 		t.Error(err)
 	}
 }
 
-/* go test -bench=GetHTMLPageBuffer */
-func BenchmarkGetHTMLPageBuffer(b *testing.B) {
-	// run the function b.N times
+func TestGetPageBufferCompareNoGotFile(t *testing.T) {
+	if err := GetPageBufferCompareNoGotFile(); err != nil {
+		t.Error(err)
+	}
+}
+
+// Benchmarks
+func BenchmarkGetPageStringToFile(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		if err := GetHTMLPageBuffer(); err != nil {
+		if err := GetPageStringToFile(); err != nil {
 			b.Fatal(err)
 		}
 	}
 }
 
-func TestGetHTMLPageBufferNoGotFile(t *testing.T) {
-	if err := GetHTMLPageBufferNoGotFile(); err != nil {
-		t.Error(err)
+func BenchmarkGetPageBufferToFile(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		if err := GetPageBufferToFile(); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
-/* go test -bench=GetHTMLPageBuffer */
-func BenchmarkGetHTMLPageBufferNoGotFile(b *testing.B) {
-	// run the function b.N times
+func BenchmarkGetPageBufferCompareNoGotFile(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		if err := GetHTMLPageBufferNoGotFile(); err != nil {
+		if err := GetPageBufferCompareNoGotFile(); err != nil {
 			b.Fatal(err)
 		}
 	}

@@ -153,17 +153,32 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 			b2, err = got.ReadByte()
 			// If EOF is returned, buffer is too short and exhausted.
 			if err != nil {
-				return err
+				wantfInfo, _ := wantf.Stat()
+				// Last byte of the file is sometimes returned with io.EOF
+				if wantfInfo.Size()-int64(index) == 1 && err == io.EOF {
+					if b1[0] == b2 {
+						log.Println("last byte returned with io.EOF")
+						// Overriding error
+						return nil
+					} else {
+						// Occurs when original buffer is used
+						return fmt.Errorf("%v and last byte %q is missing", err, b1[0])
+					}
+				}
+				return fmt.Errorf("%s : got %v, want %q at %d. Buffer is missing %d",
+					funcname[1], err, b1[0], index, wantfInfo.Size()-int64(index))
 			}
-		}
 
-		if b1[0] != b2 {
-			// The erroneous char is missing from the file but if got.UnreadByte() then
-			// the file char is already read.
-			BufferToFile(fmt.Sprintf("got_%s", funcname[1]), got)
-			return fmt.Errorf("got %q, want %q at %d", b1, b2, index)
+			if b1[0] != b2 {
+				// The erroneous char is missing from the file but if got.UnreadByte() then
+				// the file char is already read.
+				BufferToFile(fmt.Sprintf("got_%s", funcname[1]), got)
+				return fmt.Errorf("got %q, want %q at %d", b1, b2, index)
+			}
+			index++
+		} else if err != nil && err != io.EOF {
+			return fmt.Errorf("%s : read from want failed: %v", funcname[1], err)
 		}
-		index++
 	}
 	// EOF on want file has been reached
 	b2, err = got.ReadByte()
@@ -206,7 +221,7 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 
 			n, err = got.Read(gotb)
 			// Requires git 2.22.0 on Windows
-			if err == io.EOF { // If EOF produced, buffer is too short
+			if err == io.EOF { // If EOF produced, buffer is too short (and empty)
 				wantfInfo, _ := wantf.Stat()
 				// Last byte of the file is returned with io.EOF
 				if wantfInfo.Size()-int64(index) == 1 {
@@ -218,7 +233,6 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 						return fmt.Errorf("last byte %q is missing", gotb[0])
 					}
 				}
-				ReadCloserToFile(gotf, got) // only the reminder is in the file !
 				return fmt.Errorf("%s : got %v, want %q at %d. Buffer is missing %d",
 					funcname[1], err, wantb, index, wantfInfo.Size()-int64(index))
 			} else if err != nil && err != io.EOF {
