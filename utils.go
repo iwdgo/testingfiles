@@ -209,9 +209,14 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 			if err == io.EOF { // If EOF produced, buffer is too short
 				wantfInfo, _ := wantf.Stat()
 				// Last byte of the file is returned with io.EOF
-				if wantfInfo.Size()-int64(index) == 1 && n == 1 && gotb[0] == wantb[0] {
-					log.Println("last byte returned with io.EOF")
-					return nil
+				if wantfInfo.Size()-int64(index) == 1 {
+					if n == 1 && gotb[0] == wantb[0] {
+						log.Println("last byte returned with io.EOF")
+						return nil
+					} else {
+						// Occurs when original buffer is used
+						return fmt.Errorf("last byte %q is missing", gotb[0])
+					}
 				}
 				ReadCloserToFile(gotf, got) // only the reminder is in the file !
 				return fmt.Errorf("%s : got %v, want %q at %d. Buffer is missing %d",
