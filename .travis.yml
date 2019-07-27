@@ -6,6 +6,7 @@ go:
 
 before_install:
   - go get -t -v ./...
+  - mkdir output
 
 script:
   - go test -race -coverprofile=coverage.txt -covermode=atomic
