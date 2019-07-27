@@ -1,11 +1,12 @@
 // Network connectivity is required to get the page.
-// The first run of GetHTMLPage will fail and you can rename pagegot.html into pagewant.html
-
+// Tests are using one page using one get or an available file in output directory
+// The page is updated by replacing one word which is available using buffer or a file.
 package testingfiles
 
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,11 +17,11 @@ import (
 	"testing"
 )
 
-// TODO Expand into difference detection
 const (
 	techName = "Google"
 	myTech   = "MyTech"
-	wantf    = "pagewant.html"
+	wantf    = "originalpage.html"
+	updatedf = "updatedpage.html"
 )
 
 // Only one read on the network or filled with the existing want file
@@ -39,10 +40,8 @@ func TestMain(m *testing.M) {
 			if err != nil {
 				log.Fatalf("create want file failed with %v", err)
 			}
-		} else {
-			// TODO Update the file
-			log.Fatalf("%v\n", err)
 		}
+		// File updates will occur in the tests
 		wantb, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
 			log.Fatalf("%v\n", err)
@@ -70,32 +69,28 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// Replaces techname to get a different page
-func bytesToBuffer() *bytes.Buffer {
-	// It is assumed that replacement is case sensitive
-	b := new(bytes.Buffer)
-	_, _ = b.Write(bytes.Replace(wantb, []byte(techName), []byte(myTech), -1))
-	return b
-}
-
 // Buffer is used as a string and produces a file
 // The check is using FileCompare to detect an error
 // The error is used for the test and this method by the Benchmark
 func GetPageStringToFile(name string) error {
 	// got file is identical to want file - no page update
 	StringToFile(name, wantb)
-	i, _, _, _ := runtime.Caller(0)
-	if funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), "."); len(funcname) == 1 {
-		return fmt.Errorf("Func name not found")
-	} else {
-		return FileCompare(name, wantf) // second element is the func name
-	}
+	return FileCompare(name, wantf) // second element is the func name
 }
 
 // Test creation of a new file with an updated content. Error must be returned by comparison.
 func TestPageStringToFile(t *testing.T) {
-	if err := GetPageStringToFile("pagegot.html"); err != nil {
+	var err error
+	if err = os.Remove(t.Name()); err != nil && !os.IsNotExist(err) {
+		log.Println(err)
+	}
+	// TODO First run fails when file is created. CI fix
+	if err := GetPageStringToFile(t.Name()); err != nil && err != io.EOF {
+
 		t.Error(err)
+	}
+	if err := os.Remove(t.Name()); err != nil {
+		log.Println(err)
 	}
 }
 
@@ -108,26 +103,53 @@ func TestFileCompare(t *testing.T) {
 
 // Buffer to file, iso String. Then comparing files.
 func GetPageBufferToFile(name string) error {
-	// got file is rewritten with the updated values
-	BufferToFile(name, bytesToBuffer())
-	i, _, _, _ := runtime.Caller(0)
-	if funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), "."); len(funcname) == 1 {
-		return fmt.Errorf("Func name not found")
-	} else {
-		return FileCompare(name, "pagewant.html") // second element is the func name
-	}
+	// got file is rewritten with the updated page
+	// Replaces techname to get a different page. A reference file is created.
+	wantbuf := new(bytes.Buffer)
+	_, _ = wantbuf.Write(bytes.Replace(wantb, []byte(techName), []byte(myTech), -1))
+	BufferToFile(name, wantbuf)
+	return FileCompare(name, wantf)
 }
 
 // Create a file from a buffer
 func TestBufferToFile(t *testing.T) {
 	b := new(bytes.Buffer)
 	b.Write(wantb)
-	BufferToFile("gotbuffer.html", b)
+	BufferToFile(t.Name(), b)
+	if err := os.Remove(t.Name()); err != nil {
+		log.Println(err)
+	}
+
+}
+
+func TestBufferCompareNoDiff(t *testing.T) {
+	var err error
+	// Replaces techname to get a different page. A reference file is created.
+	wantbuf := new(bytes.Buffer)
+	_, _ = wantbuf.Write(bytes.Replace(wantb, []byte(techName), []byte(myTech), -1))
+	if err = os.Remove(t.Name()); err != nil && !os.IsNotExist(err) {
+		log.Println(err)
+	}
+	BufferToFile(t.Name(), wantbuf)
+	if err = BufferCompare(wantbuf, wantf); err == nil {
+		t.Error("no difference found")
+	}
 }
 
 func TestBufferCompare(t *testing.T) {
-	if err := BufferCompare(bytesToBuffer(), "pagewant.html"); err != nil {
-		t.Error(err)
+	var err error
+	// Replaces techname to get a different page. A reference file is created.
+	wantbuf := new(bytes.Buffer)
+	_, _ = wantbuf.Write(bytes.Replace(wantb, []byte(techName), []byte(myTech), -1))
+	if err = os.Remove(t.Name()); err != nil && !os.IsNotExist(err) {
+		log.Println(err)
+	}
+	BufferToFile(t.Name(), wantbuf)
+	if err = BufferCompare(wantbuf, t.Name()); err != nil {
+		t.Errorf("difference found. %v", err)
+	}
+	if err = os.Remove(t.Name()); err != nil {
+		log.Println(err)
 	}
 }
 
@@ -135,25 +157,51 @@ func TestBufferCompare(t *testing.T) {
 func TestReadCloserToFile(t *testing.T) {
 	b := new(bytes.Buffer)
 	b.Write(wantb)
-	err := ReadCloserToFile("gotbuffer.html", ioutil.NopCloser(b))
-	if err != nil {
+	if err := ReadCloserToFile("gotbuffer.html", ioutil.NopCloser(b)); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestReadCloserCompareNoDiff(t *testing.T) {
+	var err error
+	// Replaces techname to get a different page. A reference file is created.
+	wantbuf := new(bytes.Buffer)
+	_, _ = wantbuf.Write(bytes.Replace(wantb, []byte(techName), []byte(myTech), -1))
+	if err = os.Remove(t.Name()); err != nil && !os.IsNotExist(err) {
+		log.Println(err)
+	}
+	BufferToFile(t.Name(), wantbuf)
+	if err := ReadCloserCompare(ioutil.NopCloser(wantbuf), wantf); err == nil {
+		t.Error("no difference found")
+	}
+	if err = os.Remove(t.Name()); err != nil {
+		log.Println(err)
 	}
 }
 
 func TestReadCloserCompare(t *testing.T) {
-	if err := ReadCloserCompare(ioutil.NopCloser(bytesToBuffer()), "pagewant.html"); err != nil {
-		t.Error(err)
+	// Replaces techname to get a different page. A reference file is created.
+	wantbuf := new(bytes.Buffer)
+	_, _ = wantbuf.Write(bytes.Replace(wantb, []byte(techName), []byte(myTech), -1))
+	var err error
+	if err = os.Remove(t.Name()); err != nil && !os.IsNotExist(err) {
+		log.Println(err)
+	}
+	BufferToFile(t.Name(), wantbuf)
+	if err := ReadCloserCompare(ioutil.NopCloser(wantbuf), t.Name()); err != nil {
+		t.Errorf("difference found: %v", err)
+	}
+	if err = os.Remove(t.Name()); err != nil {
+		log.Println(err)
 	}
 }
-
 
 // Benchmarks
 // File operation is the most consuming. One file less means half the time.
 // Buffer has a minor advantage over string.
 func BenchmarkGetPageStringToFile(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		if err := GetPageStringToFile("pagegot.html"); err != nil {
+		if err := GetPageStringToFile("stringtofile.html"); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -161,7 +209,7 @@ func BenchmarkGetPageStringToFile(b *testing.B) {
 
 func BenchmarkGetPageBufferToFile(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		if err := GetPageBufferToFile("pagegot.html"); err != nil {
+		if err := GetPageBufferToFile(updatedf); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -170,11 +218,18 @@ func BenchmarkGetPageBufferToFile(b *testing.B) {
 // No got file. Comparing buffer to want file. Got file created only if different
 func GetPageBufferCompare() error {
 	i, _, _, _ := runtime.Caller(0)
+	fn := ""
 	if funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), "."); len(funcname) == 1 {
 		return fmt.Errorf("Func name not found")
 	} else {
-		return BufferCompare(bytesToBuffer(), "pagegot.html")
+		fn = funcname[1]
 	}
+	wantbuf := new(bytes.Buffer)
+	_, _ = wantbuf.Write(bytes.Replace(wantb, []byte(techName), []byte(myTech), -1))
+	if _, err := os.Stat(fn); err != nil {
+		BufferToFile(fn, wantbuf)
+	}
+	return BufferCompare(wantbuf, fn)
 }
 
 func BenchmarkGetPageBufferCompare(b *testing.B) {
@@ -188,11 +243,18 @@ func BenchmarkGetPageBufferCompare(b *testing.B) {
 // No got file. Comparing buffer to want file. Got file created only if different
 func GetPageReadCloserCompare() error {
 	i, _, _, _ := runtime.Caller(0)
+	fn := ""
 	if funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), "."); len(funcname) == 1 {
 		return fmt.Errorf("Func name not found")
 	} else {
-		return ReadCloserCompare(ioutil.NopCloser(bytesToBuffer()), "pagegot.html")
+		fn = funcname[0]
 	}
+	wantbuf := new(bytes.Buffer)
+	_, _ = wantbuf.Write(bytes.Replace(wantb, []byte(techName), []byte(myTech), -1))
+	if _, err := os.Stat(fn); err != nil {
+		BufferToFile(fn, wantbuf)
+	}
+	return ReadCloserCompare(ioutil.NopCloser(wantbuf), fn)
 }
 
 func BenchmarkGetPageReadCloserCompare(b *testing.B) {

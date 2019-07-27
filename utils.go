@@ -100,7 +100,7 @@ func FileCompare(got, want string) error {
 	for err != io.EOF { // Until the end of the file
 		_, err = rfile.Read(b1)
 		if err != io.EOF { // While not EOF, read the other file too
-			if err != nil {
+			if err != nil { // there's still an error
 				return err
 			}
 			_, err = pfile.Read(b2)
@@ -120,6 +120,7 @@ func FileCompare(got, want string) error {
 		rfileInfo, _ := rfile.Stat()
 		return fmt.Errorf("got file is too short by %d", rfileInfo.Size()-int64(index))
 	}
+	// err is EOF on both files
 	return nil
 }
 
