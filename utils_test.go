@@ -1,6 +1,6 @@
 // Network connectivity is required to get the page.
 // Tests are using one page using one get or an available file in output directory
-// The page is updated by replacing one word which is available using buffer or a file.
+// The page is updated by replacing one word. It is available to test as []byte and a file.
 package testingfiles
 
 import (
@@ -86,7 +86,6 @@ func TestPageStringToFile(t *testing.T) {
 	}
 	// TODO First run fails when file is created. CI fix
 	if err := GetPageStringToFile(t.Name()); err != nil && err != io.EOF {
-
 		t.Error(err)
 	}
 	if err := os.Remove(t.Name()); err != nil {

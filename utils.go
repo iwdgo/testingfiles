@@ -152,13 +152,14 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 			}
 
 			b2, err = got.ReadByte()
+			// Requires git 2.22.0 on Windows
 			// If EOF is returned, buffer is too short and exhausted.
 			if err != nil {
 				wantfInfo, _ := wantf.Stat()
 				// Last byte of the file is sometimes returned with io.EOF
 				if wantfInfo.Size()-int64(index) == 1 && err == io.EOF {
 					if b1[0] == b2 {
-						log.Println("last byte returned with io.EOF")
+						log.Println("BufferCompare: last byte returned with io.EOF")
 						// Overriding error
 						return nil
 					} else {
@@ -227,7 +228,7 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 				// Last byte of the file is returned with io.EOF
 				if wantfInfo.Size()-int64(index) == 1 {
 					if n == 1 && gotb[0] == wantb[0] {
-						log.Println("last byte returned with io.EOF")
+						log.Println("ReadCloserCompare: last byte returned with io.EOF")
 						return nil
 					} else {
 						// Occurs when original buffer is used
@@ -250,18 +251,13 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 	}
 	// EOF on reference file has been reached, let us check the got buffer
 	n, err = got.Read(gotb)
-	if !bytes.Equal(gotb, wantb) && gotb[0] == '\n' {
-		log.Printf("last LF returned: %d [%q]\n", n, gotb)
-	}
-	if err != io.EOF && n != 0 { // If EOF is not produced, file is too short
-		ReadCloserToFile(gotf, got)
-		gotInfo, _ := os.Stat(gotf)
-		return fmt.Errorf("%s : got file is too short by %d", funcname[1], gotInfo.Size())
-	} else if err != io.EOF && n == 0 {
-		if err == nil {
-			fmt.Printf("%d [%q]\n", n, gotb)
+	if err != io.EOF { // If EOF is not produced, file is too short
+		err := ReadCloserToFile(gotf, got)
+		if err != nil {
+			gotInfo, _ := os.Stat(gotf)
+			return fmt.Errorf("%s : got response is too short by %d", funcname[1], gotInfo.Size())
 		} else {
-			fmt.Printf("read %d [%q] with %v\n", n, gotb, err)
+			return fmt.Errorf("%s : got response is too short. No file written. %v", funcname[1], err)
 		}
 	}
 	return nil

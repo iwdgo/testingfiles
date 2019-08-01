@@ -1,5 +1,6 @@
 [![GoDoc](https://godoc.org/github.com/iWdGo/testingfiles?status.svg)](https://godoc.org/github.com/iWdGo/testingfiles)
 [![Go Report Card](https://goreportcard.com/badge/github.com/iwdgo/testingfiles)](https://goreportcard.com/report/github.com/iwdgo/testingfiles)
+[![codecov](https://codecov.io/gh/iWdGo/testingfiles/branch/master/graph/badge.svg)](https://codecov.io/gh/iWdGo/testingfiles)
 
 # Using reference files for large output
 
