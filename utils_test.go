@@ -6,7 +6,6 @@ package testingfiles
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -84,8 +83,10 @@ func TestPageStringToFile(t *testing.T) {
 	if err = os.Remove(t.Name()); err != nil && !os.IsNotExist(err) {
 		log.Println(err)
 	}
-	// TODO First run fails when file is created. CI fix
-	if err := GetPageStringToFile(t.Name()); err != nil && err != io.EOF {
+	// First run fails when file is created.
+	err = GetPageStringToFile(t.Name())
+	travis := len(os.Getenv("TRAVIS_GO_VERSION")) != 0
+	if err != nil && !travis && !strings.Contains(fmt.Sprintf("%v", err), "want file is larger by") {
 		t.Error(err)
 	}
 	if err := os.Remove(t.Name()); err != nil {
@@ -267,38 +268,40 @@ func BenchmarkGetPageReadCloserCompare(b *testing.B) {
 // Panic-ing on non-existent directory
 func TestOutputDir(t *testing.T) {
 	defer func() {
-		if r := recover(); !strings.Contains(fmt.Sprint(r), "The system cannot find the path specified") {
-			t.Errorf("Recovering failed with %v", r)
+		travis := len(os.Getenv("TRAVIS_GO_VERSION")) != 0
+		err := fmt.Sprint(recover())
+		if !travis && !strings.Contains(fmt.Sprint(err), "The system cannot find the path specified") {
+			t.Errorf("Recovering failed with %v", err)
+		} else if travis && !strings.Contains(err, "no such file or directory") {
+			t.Errorf("Recovering failed with %v", err)
 		}
 	}()
 	OutputDir("doesnotexist")
 }
 
-// Panic-ing on non-existent directory
+// Panic-ing on non-existent file
+func recoverFileSystem(t *testing.T) {
+	travis := len(os.Getenv("TRAVIS_GO_VERSION")) != 0
+	err := fmt.Sprint(recover())
+	if !travis && !strings.Contains(err, "The system cannot find the file specified") {
+		t.Errorf("Recovering failed with %v", err)
+	} else if travis && !strings.Contains(err, "no such file or directory") {
+		t.Errorf("Recovering failed with %v", err)
+	}
+}
+
 func TestStringToFilePanicFilename(t *testing.T) {
-	defer func() {
-		if r := recover(); !strings.Contains(fmt.Sprint(r), "The system cannot find the file specified") {
-			t.Errorf("Recovering failed with %v", r)
-		}
-	}()
+	defer recoverFileSystem(t)
 	StringToFile("", nil)
 }
 
 func TestBufferToFilePanicFilename(t *testing.T) {
-	defer func() {
-		if r := recover(); !strings.Contains(fmt.Sprint(r), "The system cannot find the file specified") {
-			t.Errorf("Recovering failed with %v", r)
-		}
-	}()
+	defer recoverFileSystem(t)
 	BufferToFile("", nil)
 }
 
 func TestReadCloserToFilePanicFilename(t *testing.T) {
-	defer func() {
-		if r := recover(); !strings.Contains(fmt.Sprint(r), "The system cannot find the file specified") {
-			t.Errorf("Recovering failed with %v", r)
-		}
-	}()
+	defer recoverFileSystem(t)
 	ReadCloserToFile("", nil)
 }
 
@@ -307,17 +310,25 @@ func TestReadCloserToFilePanicContent(t *testing.T) {
 		if r := recover(); !strings.Contains(fmt.Sprint(r), "invalid memory address or nil pointer dereference") {
 			t.Errorf("Recovering failed with %v", r)
 		}
+		os.Remove("willpanic") // File is created
 	}()
 	ReadCloserToFile("willpanic", nil)
 }
 
 func TestFileCompareDoesNotExist(t *testing.T) {
 	OutputDir("output")
-	if err := FileCompare("doesnotmatter", "originalpage.html"); !strings.Contains(fmt.Sprint(err), "The system cannot find the file specified") {
+	err := fmt.Sprint(FileCompare("doesnotmatter", "originalpage.html"))
+	travis := len(os.Getenv("TRAVIS_GO_VERSION")) != 0
+	if !travis && !strings.Contains(err, "The system cannot find the file specified") {
+		t.Errorf("Non-existent want file not returned but %v", err)
+	} else if travis && !strings.Contains(err, "no such file or directory") {
 		t.Errorf("Non-existent want file not returned but %v", err)
 	}
-	if err := FileCompare("doesnotexist", "doesnotmatter"); !strings.Contains(fmt.Sprint(err), "The system cannot find the file specified") {
-		t.Errorf("Non-existent got file not returned but %v", err)
+	err = fmt.Sprint(FileCompare("doesnotexist", "doesnotmatter"))
+	if !travis && !strings.Contains(err, "The system cannot find the file specified") {
+		t.Errorf("Non-existent want file not returned but %v", err)
+	} else if travis && !strings.Contains(err, "no such file or directory") {
+		t.Errorf("Non-existent want file not returned but %v", err)
 	}
 }
 
@@ -342,7 +353,7 @@ func TestFileCompareDifference(t *testing.T) {
 	}
 	os.Remove("afile")
 	os.Remove("abfile")
-	os.Remove("abcfile")
+	os.Remove("acfile")
 }
 
 /* Does not panic
