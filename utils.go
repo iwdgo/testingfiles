@@ -83,44 +83,46 @@ func ReadCloserToFile(fname string, content io.ReadCloser) error {
 // FileCompare checks large outputs of a test when a file storage is more convenient or required.
 // Names of the files to compare are passed as arguments and searched in the working directory.
 func FileCompare(got, want string) error {
-	rfile, err := os.Open(want)
-	defer rfile.Close()
+	filew, err := os.Open(want)
+	defer filew.Close()
 	if err != nil {
 		return fmt.Errorf("want file %s open failed with %v", want, err)
 	}
 
-	pfile, err := os.Open(got)
-	defer pfile.Close()
+	fileg, err := os.Open(got)
+	defer fileg.Close()
 	if err != nil {
 		return fmt.Errorf("got file %s open failed with %v", got, err)
 	}
 
-	b1, b2 := make([]byte, 1), make([]byte, 1)
+	bw, bg := make([]byte, 1), make([]byte, 1)
 	index := 0          // Index in file to locate error
 	for err != io.EOF { // Until the end of the file
-		_, err = rfile.Read(b1)
+		_, err = filew.Read(bw)
 		if err != io.EOF { // While not EOF, read the other file too
 			if err != nil { // there's still an error
 				return err
 			}
-			_, err = pfile.Read(b2)
-			if err != nil { // If EOF is returned, file is too short
-				return err
+			_, err = fileg.Read(bg)
+			if err != nil {
+				wfileInfo, _ := filew.Stat()
+				return fmt.Errorf("want file is larger by %d bytes", wfileInfo.Size()-int64(index))
 			}
 		}
-
-		if !bytes.Equal(b1, b2) {
-			return fmt.Errorf("got %q, want %q at %d", b1, b2, index)
+		// Another byte was read from want file
+		if !bytes.Equal(bw, bg) {
+			return fmt.Errorf("got %q, want %q at %d", bw, bg, index)
 		}
 		index++
 	}
-	// EOF on reference file has been reached, let us check the produced file
-	_, err = pfile.Read(b2)
-	if err != io.EOF { // If EOF is not returned, produced file is shorter than reference
-		rfileInfo, _ := rfile.Stat()
-		return fmt.Errorf("got file is too short by %d", rfileInfo.Size()-int64(index))
+	// EOF on reference (want) file has been reached.
+	_, err = fileg.Read(bg)
+	// If EOF is not returned, got file is larger than want file which has index-1 length
+	if err != io.EOF {
+		gfileInfo, _ := fileg.Stat()
+		return fmt.Errorf("got file is larger by %d bytes", gfileInfo.Size()-int64(index-1))
 	}
-	// err is EOF on both files
+	// Both files which are identical
 	return nil
 }
 
@@ -135,16 +137,16 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 	defer wantf.Close()
 
 	// Finding caller name to
+	fileg := "buffercomparedefault"
 	i, _, _, _ := runtime.Caller(1) // Skipping the calling test
-	funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), ".")
-	if len(funcname) == 1 {
-		return fmt.Errorf("Func name not found")
+	if funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), "."); len(funcname) == 1 {
+		log.Printf("Func name not found. Using %s\n", fileg)
 	}
 
 	b1 := make([]byte, 1)
 	var b2 byte
 	index := 0          // Index in file to locate error
-	for err != io.EOF { // Until the end of the file
+	for err != io.EOF { // Until the end of the reference file (want)
 		_, err = wantf.Read(b1)
 		if err != io.EOF { // While not EOF, read the buffer
 			if err != nil {
@@ -168,25 +170,25 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 					}
 				}
 				return fmt.Errorf("%s : got %v, want %q at %d. Buffer is missing %d",
-					funcname[1], err, b1[0], index, wantfInfo.Size()-int64(index))
+					fileg, err, b1[0], index, wantfInfo.Size()-int64(index))
 			}
 
 			if b1[0] != b2 {
 				// The erroneous char is missing from the file but if got.UnreadByte() then
 				// the file char is already read.
-				BufferToFile(fmt.Sprintf("got_%s", funcname[1]), got)
+				BufferToFile(fmt.Sprintf("got_%s", fileg), got)
 				return fmt.Errorf("got %q, want %q at %d", b1, b2, index)
 			}
 			index++
 		} else if err != nil && err != io.EOF {
-			return fmt.Errorf("%s : read from want failed: %v", funcname[1], err)
+			return fmt.Errorf("%s : read from want failed: %v", fileg, err)
 		}
 	}
 	// EOF on want file has been reached
 	b2, err = got.ReadByte()
 	// If EOF is not returned, buffer is longer than the file which is exhausted.
 	if err != io.EOF {
-		BufferToFile(fmt.Sprintf("got_%s", funcname[1]), got)
+		BufferToFile(fmt.Sprintf("got_%s", fileg), got)
 		return fmt.Errorf("got buffer is too long by %d", got.Len())
 	}
 	return nil

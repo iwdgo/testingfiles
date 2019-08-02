@@ -263,3 +263,97 @@ func BenchmarkGetPageReadCloserCompare(b *testing.B) {
 		}
 	}
 }
+
+// Panic-ing on non-existent directory
+func TestOutputDir(t *testing.T) {
+	defer func() {
+		if r := recover(); !strings.Contains(fmt.Sprint(r), "The system cannot find the path specified") {
+			t.Errorf("Recovering failed with %v", r)
+		}
+	}()
+	OutputDir("doesnotexist")
+}
+
+// Panic-ing on non-existent directory
+func TestStringToFilePanicFilename(t *testing.T) {
+	defer func() {
+		if r := recover(); !strings.Contains(fmt.Sprint(r), "The system cannot find the file specified") {
+			t.Errorf("Recovering failed with %v", r)
+		}
+	}()
+	StringToFile("", nil)
+}
+
+func TestBufferToFilePanicFilename(t *testing.T) {
+	defer func() {
+		if r := recover(); !strings.Contains(fmt.Sprint(r), "The system cannot find the file specified") {
+			t.Errorf("Recovering failed with %v", r)
+		}
+	}()
+	BufferToFile("", nil)
+}
+
+func TestReadCloserToFilePanicFilename(t *testing.T) {
+	defer func() {
+		if r := recover(); !strings.Contains(fmt.Sprint(r), "The system cannot find the file specified") {
+			t.Errorf("Recovering failed with %v", r)
+		}
+	}()
+	ReadCloserToFile("", nil)
+}
+
+func TestReadCloserToFilePanicContent(t *testing.T) {
+	defer func() {
+		if r := recover(); !strings.Contains(fmt.Sprint(r), "invalid memory address or nil pointer dereference") {
+			t.Errorf("Recovering failed with %v", r)
+		}
+	}()
+	ReadCloserToFile("willpanic", nil)
+}
+
+func TestFileCompareDoesNotExist(t *testing.T) {
+	OutputDir("output")
+	if err := FileCompare("doesnotmatter", "originalpage.html"); !strings.Contains(fmt.Sprint(err), "The system cannot find the file specified") {
+		t.Errorf("Non-existent want file not returned but %v", err)
+	}
+	if err := FileCompare("doesnotexist", "doesnotmatter"); !strings.Contains(fmt.Sprint(err), "The system cannot find the file specified") {
+		t.Errorf("Non-existent got file not returned but %v", err)
+	}
+}
+
+func TestFileCompareDifference(t *testing.T) {
+	OutputDir("output")
+	b := new(bytes.Buffer)
+	b.WriteString("a")
+	BufferToFile("afile", b)
+	b.WriteByte('b')
+	BufferToFile("abfile", b)
+	b.Reset()
+	b.WriteString("ac")
+	BufferToFile("acfile", b)
+	if err := FileCompare("afile", "abfile"); fmt.Sprint(err) != "want file is larger by 1 bytes" {
+		t.Errorf("%v", err)
+	}
+	if err := FileCompare("abfile", "afile"); fmt.Sprint(err) != "got file is larger by 1 bytes" {
+		t.Errorf("%v", err)
+	}
+	if err := FileCompare("abfile", "acfile"); fmt.Sprint(err) != `got "c", want "b" at 1` {
+		t.Errorf("%v", err)
+	}
+	os.Remove("afile")
+	os.Remove("abfile")
+	os.Remove("abcfile")
+}
+
+/* Does not panic
+func TestStringToFilePanicContent(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("Recovering failed with %v", r)
+		}
+	}()
+	os.OpenFile("willpanic", os.O_RDONLY, 000)
+	StringToFile("willpanic", []byte{'a'})
+}
+
+*/
