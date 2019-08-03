@@ -292,9 +292,8 @@ func TestOutputDir(t *testing.T) {
 // Errors on files are compared to go lang values. Only Windows and Linux message are foreseen.
 // The error returned by FileCompare is not the file error only to provide relevant information.
 func IsFileError(errm string) bool {
-	log.Println(syscall.ERROR_FILE_NOT_FOUND)
 	if runtime.GOOS == "windows" {
-		return strings.Contains(errm, syscall.ERROR_FILE_NOT_FOUND.Error())
+		return strings.Contains(errm, ERROR_FILE_NOT_FOUND)
 	} else {
 		return strings.Contains(errm, syscall.EEXIST.Error())
 	}
