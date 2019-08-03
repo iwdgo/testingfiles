@@ -200,7 +200,7 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 // If identical, nil is returned.
 // Logic and method are identical to *buffer.Bytes but duplicating the code avoids ReadAll.
 // First byte index is 0
-// TODO Benchmark ReadAll agains specific byte by byte code
+// TODO Benchmark ReadAll against specific byte by byte code
 func ReadCloserCompare(got io.ReadCloser, want string) error {
 	wantf, err := os.Open(want)
 	if err != nil {
