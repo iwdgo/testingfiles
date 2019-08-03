@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"syscall"
 	"testing"
 )
 
@@ -24,9 +23,11 @@ const (
 	updatedf = "updatedpage.html"
 
 	// Syscall package does not know other OS and messages are unreachable
-	// TODO Handling errors should be OS specific
+	// On Travis, syscall messages seem unusable
 	ERROR_PATH_NOT_FOUND = "The system cannot find the path specified"
 	ERROR_FILE_NOT_FOUND = "The system cannot find the file specified"
+
+	EEXIST = "no such file or directory"
 )
 
 // Only one read on the network or filled with the existing want file
@@ -276,7 +277,7 @@ func IsPathError(errm string) bool {
 	if runtime.GOOS == "windows" {
 		return strings.Contains(errm, ERROR_PATH_NOT_FOUND)
 	} else {
-		return strings.Contains(errm, syscall.EEXIST.Error())
+		return strings.Contains(errm, EEXIST)
 	}
 }
 
@@ -295,7 +296,7 @@ func IsFileError(errm string) bool {
 	if runtime.GOOS == "windows" {
 		return strings.Contains(errm, ERROR_FILE_NOT_FOUND)
 	} else {
-		return strings.Contains(errm, syscall.EEXIST.Error())
+		return strings.Contains(errm, EEXIST)
 	}
 }
 
