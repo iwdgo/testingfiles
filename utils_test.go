@@ -22,6 +22,11 @@ const (
 	myTech   = "MyTech"
 	wantf    = "originalpage.html"
 	updatedf = "updatedpage.html"
+
+	// Syscall package does not know other OS and messages are unreachable
+	// TODO Handling errors should be OS specific
+	ERROR_PATH_NOT_FOUND = "The system cannot find the path specified"
+	ERROR_FILE_NOT_FOUND = "The system cannot find the file specified"
 )
 
 // Only one read on the network or filled with the existing want file
@@ -269,7 +274,7 @@ func BenchmarkGetPageReadCloserCompare(b *testing.B) {
 // Panic-ing on non-existent directory
 func IsPathError(errm string) bool {
 	if runtime.GOOS == "windows" {
-		return strings.Contains(errm, syscall.ERROR_PATH_NOT_FOUND.Error())
+		return strings.Contains(errm, ERROR_PATH_NOT_FOUND)
 	} else {
 		return strings.Contains(errm, syscall.EEXIST.Error())
 	}
@@ -287,6 +292,7 @@ func TestOutputDir(t *testing.T) {
 // Errors on files are compared to go lang values. Only Windows and Linux message are foreseen.
 // The error returned by FileCompare is not the file error only to provide relevant information.
 func IsFileError(errm string) bool {
+	log.Println(syscall.ERROR_FILE_NOT_FOUND)
 	if runtime.GOOS == "windows" {
 		return strings.Contains(errm, syscall.ERROR_FILE_NOT_FOUND.Error())
 	} else {
