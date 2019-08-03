@@ -4,12 +4,13 @@
 
 # Using reference files for large output
 
-A reference file (want) is useful or needed because of the size of the output or for recording purposes.
-It is useful for testing.
+Keeping reference on a file is useful becayse of the size of the output or for recording purposes.
+Such a file is useful for testing.
 
-Reference files are in a working directory.
-Content is put in a file and files are compared.
-Compring a buffer (*bytes.Buffer or io.ReadCloser) is more efficient when feasible.
+Reference files are expected in a working directory.
+Depending on the got source (`File`, `buffer`, `ReadCloser`), a comparison method is available.
+If feasible, using directly the buffer or the response is more efficient than writing for file first.
+When comparison fails and something is left in the buffer, a file is created with `got_` prefix.
 
 ## Working directory
 
@@ -18,10 +19,7 @@ The directory is not created but its existence is checked.
 If the working directory (not the temp, nor the executing) is unavailable,
 tests will panic.
 
-## Buffer comparison
-
-To avoid overhead, the buffer can also be compared to a file.
-If comparison fails, a got file is produced with the reminder from the difference found.
+In CI (Travis), the working directory is created.
 
 ## Testing of the module
 
@@ -29,7 +27,7 @@ Testing requires online access for one read. Otherwise, a reference file must be
 No file is saved and the first test run will fail and produced the required file.
 Got file can be renamed into a want file and the second run will be successful.
 
-Benchmarking is fairly unconclusive.
+Benchmarking is fairly inconclusive and is more of a TODO.
 
 ```
 go version go1.13beta1 windows/amd64
