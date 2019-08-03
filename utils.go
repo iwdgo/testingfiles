@@ -238,8 +238,6 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 						log.Println("ReadCloserCompare: last byte returned with io.EOF")
 						return nil
 					}
-					// Occurs when original buffer is used
-					return fmt.Errorf("last byte %q is missing from response", wantb[0])
 				}
 				return fmt.Errorf("%s : got %v, want %q at %d. Response is missing %d",
 					fileg, err, wantb, index, wantfInfo.Size()-int64(index))
@@ -255,7 +253,7 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 			return fmt.Errorf("%s : read from want failed: %v", fileg, err)
 		}
 	}
-	// EOF on reference file has been reached, let us check the got buffer
+	// EOF on reference file has been reached, check the got buffer
 	_, err = got.Read(gotb)
 	// If EOF is not produced, response is longer than file
 	if err != io.EOF {

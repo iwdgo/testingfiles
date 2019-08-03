@@ -428,7 +428,7 @@ func TestReadCloserCompareDifference(t *testing.T) {
 	}
 	b.Reset()
 	b.WriteString("a")
-	if err := ReadCloserCompare(ioutil.NopCloser(b), "acfile"); fmt.Sprint(err) != `last byte 'c' is missing from response` {
+	if err := ReadCloserCompare(ioutil.NopCloser(b), "acfile"); !strings.Contains(fmt.Sprint(err), `got EOF, want "c" at 1. Response is missing 1`) {
 		t.Errorf("%v", err)
 	}
 	b.Reset()
