@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"testing"
 )
 
@@ -266,26 +267,36 @@ func BenchmarkGetPageReadCloserCompare(b *testing.B) {
 }
 
 // Panic-ing on non-existent directory
+func IsPathError(errm string) bool {
+	if runtime.GOOS == "windows" {
+		return strings.Contains(errm, syscall.ERROR_PATH_NOT_FOUND.Error())
+	} else {
+		return strings.Contains(errm, syscall.EEXIST.Error())
+	}
+}
+
 func TestOutputDir(t *testing.T) {
 	defer func() {
-		travis := len(os.Getenv("TRAVIS_GO_VERSION")) != 0
-		err := fmt.Sprint(recover())
-		if !travis && !strings.Contains(fmt.Sprint(err), "The system cannot find the path specified") {
-			t.Errorf("Recovering failed with %v", err)
-		} else if travis && !strings.Contains(err, "no such file or directory") {
+		if err := fmt.Sprint(recover()); !IsPathError(err) {
 			t.Errorf("Recovering failed with %v", err)
 		}
 	}()
 	OutputDir("doesnotexist")
 }
 
+// Errors on files are compared to go lang values. Only Windows and Linux message are foreseen.
+// The error returned by FileCompare is not the file error only to provide relevant information.
+func IsFileError(errm string) bool {
+	if runtime.GOOS == "windows" {
+		return strings.Contains(errm, syscall.ERROR_FILE_NOT_FOUND.Error())
+	} else {
+		return strings.Contains(errm, syscall.EEXIST.Error())
+	}
+}
+
 // Panic-ing on non-existent file
 func recoverFileSystem(t *testing.T) {
-	travis := len(os.Getenv("TRAVIS_GO_VERSION")) != 0
-	err := fmt.Sprint(recover())
-	if !travis && !strings.Contains(err, "The system cannot find the file specified") {
-		t.Errorf("Recovering failed with %v", err)
-	} else if travis && !strings.Contains(err, "no such file or directory") {
+	if err := fmt.Sprint(recover()); !IsFileError(err) {
 		t.Errorf("Recovering failed with %v", err)
 	}
 }
@@ -317,17 +328,10 @@ func TestReadCloserToFilePanicContent(t *testing.T) {
 
 func TestFileCompareDoesNotExist(t *testing.T) {
 	OutputDir("output")
-	err := fmt.Sprint(FileCompare("doesnotmatter", "originalpage.html"))
-	travis := len(os.Getenv("TRAVIS_GO_VERSION")) != 0
-	if !travis && !strings.Contains(err, "The system cannot find the file specified") {
-		t.Errorf("Non-existent want file not returned but %v", err)
-	} else if travis && !strings.Contains(err, "no such file or directory") {
-		t.Errorf("Non-existent want file not returned but %v", err)
+	if err := fmt.Sprint(FileCompare("doesnotmatter", "doesnotexist")); !IsFileError(err) {
+		t.Errorf("Non-existent got file not returned but %v", err)
 	}
-	err = fmt.Sprint(FileCompare("doesnotexist", "doesnotmatter"))
-	if !travis && !strings.Contains(err, "The system cannot find the file specified") {
-		t.Errorf("Non-existent want file not returned but %v", err)
-	} else if travis && !strings.Contains(err, "no such file or directory") {
+	if err := fmt.Sprint(FileCompare("doesnotexist", "originalpage.html")); !IsFileError(err) {
 		t.Errorf("Non-existent want file not returned but %v", err)
 	}
 }
@@ -354,6 +358,50 @@ func TestFileCompareDifference(t *testing.T) {
 	os.Remove("afile")
 	os.Remove("abfile")
 	os.Remove("acfile")
+}
+
+func TestBufferCompareDifference(t *testing.T) {
+	OutputDir("output")
+	b := new(bytes.Buffer)
+	b.WriteString("a")
+	BufferToFile("afile", b)
+	b.WriteByte('b')
+	BufferToFile("abfile", b)
+	b.Reset()
+	b.WriteString("abc")
+	BufferToFile("abcfile", b)
+	b.Reset()
+	b.WriteString("ac")
+	BufferToFile("acfile", b)
+	if err := BufferCompare(b, "acfile"); err != nil {
+		t.Errorf("%v", err)
+	}
+	// TODO Add buffer dump file existence and size
+	b.Reset()
+	b.WriteString("ac")
+	if err := BufferCompare(b, "abfile"); fmt.Sprint(err) != `got "b", want 'c' at 1` {
+		t.Errorf("%v", err)
+	}
+	b.Reset()
+	b.WriteString("ab")
+	if err := BufferCompare(b, "afile"); fmt.Sprint(err) != "got buffer is too long by 1" {
+		t.Errorf("%v", err)
+	}
+	b.Reset()
+	b.WriteString("a")
+	if err := BufferCompare(b, "acfile"); fmt.Sprint(err) != `got EOF and last byte 'c' is missing` {
+		t.Errorf("%v", err)
+	}
+	b.Reset()
+	b.WriteString("a")
+	if err := BufferCompare(b, "abcfile"); fmt.Sprint(err) != `TestBufferCompareDifference : got EOF, want 'b' at 1. Buffer is missing 2` {
+		t.Errorf("%v", err)
+	}
+
+	os.Remove("afile")
+	os.Remove("abfile")
+	os.Remove("acfile")
+	os.Remove("abcfile")
 }
 
 /* Does not panic

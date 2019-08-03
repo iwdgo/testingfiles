@@ -129,6 +129,7 @@ func FileCompare(got, want string) error {
 // BufferCompare compares the buffer to a file.
 // If an error occurs, got file is created and the error is returned.
 // If identical, nil is returned.
+// First byte index is 0
 func BufferCompare(got *bytes.Buffer, want string) error {
 	wantf, err := os.Open(want)
 	if err != nil {
@@ -141,6 +142,8 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 	i, _, _, _ := runtime.Caller(1) // Skipping the calling test
 	if funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), "."); len(funcname) == 1 {
 		log.Printf("Func name not found. Using %s\n", fileg)
+	} else {
+		fileg = funcname[1]
 	}
 
 	b1 := make([]byte, 1)
@@ -166,7 +169,7 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 						return nil
 					} else {
 						// Occurs when original buffer is used
-						return fmt.Errorf("%v and last byte %q is missing", err, b1[0])
+						return fmt.Errorf("got %v and last byte %q is missing", err, b1[0])
 					}
 				}
 				return fmt.Errorf("%s : got %v, want %q at %d. Buffer is missing %d",
@@ -189,7 +192,7 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 	// If EOF is not returned, buffer is longer than the file which is exhausted.
 	if err != io.EOF {
 		BufferToFile(fmt.Sprintf("got_%s", fileg), got)
-		return fmt.Errorf("got buffer is too long by %d", got.Len())
+		return fmt.Errorf("got buffer is too long by %d", got.Len()+1)
 	}
 	return nil
 }
@@ -197,6 +200,7 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 // If an error occurs, got file is created and the error is returned.
 // If identical, nil is returned.
 // Logic and method are identical to *buffer.Bytes but duplicating the code avoids ReadAll.
+// First byte index is 0
 // TODO Benchmark ReadAll agains specific byte by byte code
 func ReadCloserCompare(got io.ReadCloser, want string) error {
 	wantf, err := os.Open(want)
@@ -206,15 +210,17 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 	defer wantf.Close()
 
 	// Finding caller name to
+	fileg := "readclosercomparedefault"
 	i, _, _, _ := runtime.Caller(1) // Skipping the calling test
-	funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), ".")
-	if len(funcname) == 1 {
-		return fmt.Errorf("Func name not found")
+	if funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), "."); len(funcname) == 1 {
+		log.Printf("Func name not found")
+	} else {
+		fileg = funcname[1]
 	}
 
 	// Actual comparison
 	wantb, gotb := make([]byte, 1), make([]byte, 1)
-	gotf := fmt.Sprintf("got_%s", funcname[1])
+	gotf := fmt.Sprintf("got_%s", fileg)
 	n, index := 0, 0    // Index in file to locate error
 	for err != io.EOF { // Until the end of the file
 		_, err = wantf.Read(wantb)
@@ -238,17 +244,17 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 					}
 				}
 				return fmt.Errorf("%s : got %v, want %q at %d. Buffer is missing %d",
-					funcname[1], err, wantb, index, wantfInfo.Size()-int64(index))
+					fileg, err, wantb, index, wantfInfo.Size()-int64(index))
 			} else if err != nil && err != io.EOF {
-				return fmt.Errorf("%s: %v\n", funcname[1], err)
+				return fmt.Errorf("%s: %v\n", fileg, err)
 			}
 			if !bytes.Equal(gotb, wantb) {
 				ReadCloserToFile(gotf, got)
-				return fmt.Errorf("%s : got %q, want %q at %d", funcname[1], gotb, wantb, index)
+				return fmt.Errorf("%s : got %q, want %q at %d", fileg, gotb, wantb, index)
 			}
 			index++
 		} else if err != nil && err != io.EOF {
-			return fmt.Errorf("%s : read from want failed: %v", funcname[1], err)
+			return fmt.Errorf("%s : read from want failed: %v", fileg, err)
 		}
 	}
 	// EOF on reference file has been reached, let us check the got buffer
@@ -257,9 +263,9 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 		err := ReadCloserToFile(gotf, got)
 		if err != nil {
 			gotInfo, _ := os.Stat(gotf)
-			return fmt.Errorf("%s : got response is too short by %d", funcname[1], gotInfo.Size())
+			return fmt.Errorf("%s : got response is too short by %d", fileg, gotInfo.Size())
 		} else {
-			return fmt.Errorf("%s : got response is too short. No file written. %v", funcname[1], err)
+			return fmt.Errorf("%s : got response is too short. No file written. %v", fileg, err)
 		}
 	}
 	return nil
