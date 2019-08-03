@@ -167,20 +167,18 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 						log.Println("BufferCompare: last byte returned with io.EOF")
 						// Overriding error
 						return nil
-					} else {
-						// Occurs when original buffer is used
-						return fmt.Errorf("got %v and last byte %q is missing", err, b1[0])
 					}
+					// Occurs when original buffer is used
+					return fmt.Errorf("got %v and last byte %q is missing", err, b1[0])
 				}
 				return fmt.Errorf("%s : got %v, want %q at %d. Buffer is missing %d",
 					fileg, err, b1[0], index, wantfInfo.Size()-int64(index))
 			}
 
 			if b1[0] != b2 {
-				// The erroneous char is missing from the file but if got.UnreadByte() then
-				// the file char is already read.
+				// The erroneous char is missing from the file (want part).
 				BufferToFile(fmt.Sprintf("got_%s", fileg), got)
-				return fmt.Errorf("got %q, want %q at %d", b1, b2, index)
+				return fmt.Errorf("got %q, want %q at %d", b2, b1, index)
 			}
 			index++
 		} else if err != nil && err != io.EOF {
@@ -188,7 +186,7 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 		}
 	}
 	// EOF on want file has been reached
-	b2, err = got.ReadByte()
+	_, err = got.ReadByte()
 	// If EOF is not returned, buffer is longer than the file which is exhausted.
 	if err != io.EOF {
 		BufferToFile(fmt.Sprintf("got_%s", fileg), got)
@@ -197,6 +195,7 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 	return nil
 }
 
+// ReadCloserCompare compares a ReadCloser to a file.
 // If an error occurs, got file is created and the error is returned.
 // If identical, nil is returned.
 // Logic and method are identical to *buffer.Bytes but duplicating the code avoids ReadAll.
@@ -238,12 +237,11 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 					if n == 1 && gotb[0] == wantb[0] {
 						log.Println("ReadCloserCompare: last byte returned with io.EOF")
 						return nil
-					} else {
-						// Occurs when original buffer is used
-						return fmt.Errorf("last byte %q is missing", gotb[0])
 					}
+					// Occurs when original buffer is used
+					return fmt.Errorf("last byte %q is missing from response", wantb[0])
 				}
-				return fmt.Errorf("%s : got %v, want %q at %d. Buffer is missing %d",
+				return fmt.Errorf("%s : got %v, want %q at %d. Response is missing %d",
 					fileg, err, wantb, index, wantfInfo.Size()-int64(index))
 			} else if err != nil && err != io.EOF {
 				return fmt.Errorf("%s: %v\n", fileg, err)
@@ -258,15 +256,16 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 		}
 	}
 	// EOF on reference file has been reached, let us check the got buffer
-	n, err = got.Read(gotb)
-	if err != io.EOF { // If EOF is not produced, file is too short
+	_, err = got.Read(gotb)
+	// If EOF is not produced, response is longer than file
+	if err != io.EOF {
+		// The read byte of the response is not written to file
 		err := ReadCloserToFile(gotf, got)
-		if err != nil {
+		if err == nil {
 			gotInfo, _ := os.Stat(gotf)
-			return fmt.Errorf("%s : got response is too short by %d", fileg, gotInfo.Size())
-		} else {
-			return fmt.Errorf("%s : got response is too short. No file written. %v", fileg, err)
+			return fmt.Errorf("%s : got response is too long by %d", fileg, gotInfo.Size())
 		}
+		return fmt.Errorf("%s : got response is too short. No file written. %v", fileg, err)
 	}
 	return nil
 }

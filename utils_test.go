@@ -72,7 +72,10 @@ func TestMain(m *testing.M) {
 			log.Printf("page is trucated by %d\n", len(wantb)-n)
 		}
 	}
-	os.Exit(m.Run())
+	createTestFiles()
+	e := m.Run()
+	removeTestFiles()
+	os.Exit(e)
 }
 
 // Buffer is used as a string and produces a file
@@ -225,12 +228,11 @@ func BenchmarkGetPageBufferToFile(b *testing.B) {
 // No got file. Comparing buffer to want file. Got file created only if different
 func GetPageBufferCompare() error {
 	i, _, _, _ := runtime.Caller(0)
-	fn := ""
-	if funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), "."); len(funcname) == 1 {
+	funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), ".")
+	if len(funcname) == 1 {
 		return fmt.Errorf("Func name not found")
-	} else {
-		fn = funcname[1]
 	}
+	fn := funcname[1]
 	wantbuf := new(bytes.Buffer)
 	_, _ = wantbuf.Write(bytes.Replace(wantb, []byte(techName), []byte(myTech), -1))
 	if _, err := os.Stat(fn); err != nil {
@@ -250,12 +252,11 @@ func BenchmarkGetPageBufferCompare(b *testing.B) {
 // No got file. Comparing buffer to want file. Got file created only if different
 func GetPageReadCloserCompare() error {
 	i, _, _, _ := runtime.Caller(0)
-	fn := ""
-	if funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), "."); len(funcname) == 1 {
+	funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), ".")
+	if len(funcname) == 1 {
 		return fmt.Errorf("Func name not found")
-	} else {
-		fn = funcname[0]
 	}
+	fn := funcname[1]
 	wantbuf := new(bytes.Buffer)
 	_, _ = wantbuf.Write(bytes.Replace(wantb, []byte(techName), []byte(myTech), -1))
 	if _, err := os.Stat(fn); err != nil {
@@ -276,9 +277,8 @@ func BenchmarkGetPageReadCloserCompare(b *testing.B) {
 func IsPathError(errm string) bool {
 	if runtime.GOOS == "windows" {
 		return strings.Contains(errm, ERROR_PATH_NOT_FOUND)
-	} else {
-		return strings.Contains(errm, EEXIST)
 	}
+	return strings.Contains(errm, EEXIST)
 }
 
 func TestOutputDir(t *testing.T) {
@@ -295,9 +295,8 @@ func TestOutputDir(t *testing.T) {
 func IsFileError(errm string) bool {
 	if runtime.GOOS == "windows" {
 		return strings.Contains(errm, ERROR_FILE_NOT_FOUND)
-	} else {
-		return strings.Contains(errm, EEXIST)
 	}
+	return strings.Contains(errm, EEXIST)
 }
 
 // Panic-ing on non-existent file
@@ -343,15 +342,7 @@ func TestFileCompareDoesNotExist(t *testing.T) {
 }
 
 func TestFileCompareDifference(t *testing.T) {
-	OutputDir("output")
-	b := new(bytes.Buffer)
-	b.WriteString("a")
-	BufferToFile("afile", b)
-	b.WriteByte('b')
-	BufferToFile("abfile", b)
-	b.Reset()
-	b.WriteString("ac")
-	BufferToFile("acfile", b)
+	createTestFiles()
 	if err := FileCompare("afile", "abfile"); fmt.Sprint(err) != "want file is larger by 1 bytes" {
 		t.Errorf("%v", err)
 	}
@@ -361,12 +352,9 @@ func TestFileCompareDifference(t *testing.T) {
 	if err := FileCompare("abfile", "acfile"); fmt.Sprint(err) != `got "c", want "b" at 1` {
 		t.Errorf("%v", err)
 	}
-	os.Remove("afile")
-	os.Remove("abfile")
-	os.Remove("acfile")
 }
 
-func TestBufferCompareDifference(t *testing.T) {
+func createTestFiles() {
 	OutputDir("output")
 	b := new(bytes.Buffer)
 	b.WriteString("a")
@@ -379,13 +367,25 @@ func TestBufferCompareDifference(t *testing.T) {
 	b.Reset()
 	b.WriteString("ac")
 	BufferToFile("acfile", b)
+}
+
+func removeTestFiles() {
+	os.Remove("afile")
+	os.Remove("abfile")
+	os.Remove("acfile")
+	os.Remove("abcfile")
+}
+
+func TestBufferCompareDifference(t *testing.T) {
+	b := new(bytes.Buffer)
+	b.WriteString("ac")
 	if err := BufferCompare(b, "acfile"); err != nil {
 		t.Errorf("%v", err)
 	}
-	// TODO Add buffer dump file existence and size
+	// TODO Add dump file existence and size
 	b.Reset()
 	b.WriteString("ac")
-	if err := BufferCompare(b, "abfile"); fmt.Sprint(err) != `got "b", want 'c' at 1` {
+	if err := BufferCompare(b, "abfile"); fmt.Sprint(err) != `got 'c', want "b" at 1` {
 		t.Errorf("%v", err)
 	}
 	b.Reset()
@@ -403,11 +403,39 @@ func TestBufferCompareDifference(t *testing.T) {
 	if err := BufferCompare(b, "abcfile"); fmt.Sprint(err) != `TestBufferCompareDifference : got EOF, want 'b' at 1. Buffer is missing 2` {
 		t.Errorf("%v", err)
 	}
+}
 
-	os.Remove("afile")
-	os.Remove("abfile")
-	os.Remove("acfile")
-	os.Remove("abcfile")
+func TestReadCloserCompareDifference(t *testing.T) {
+	b := new(bytes.Buffer)
+	b.WriteString("ac")
+	if err := ReadCloserCompare(ioutil.NopCloser(b), "acfile"); err != nil {
+		t.Errorf("%v", err)
+	}
+	b.Reset()
+	b.WriteString("ac")
+	if err := ReadCloserCompare(ioutil.NopCloser(b), "abfile"); !strings.Contains(fmt.Sprint(err), `got "c", want "b" at 1`) {
+		t.Errorf("%v", err)
+	}
+	b.Reset()
+	b.WriteString("ab")
+	// Length should be 1 but the last byte read from the response is not written to file
+	if err := ReadCloserCompare(ioutil.NopCloser(b), "afile"); !strings.Contains(fmt.Sprint(err), `got response is too long by 0`) {
+		fn := "TestReadCloserCompareDifference"
+		if fs, errf := os.Stat(fn); errf == nil && fs.Size() == 0 {
+			os.Remove(fn)
+		}
+		t.Errorf("%v", err)
+	}
+	b.Reset()
+	b.WriteString("a")
+	if err := ReadCloserCompare(ioutil.NopCloser(b), "acfile"); fmt.Sprint(err) != `last byte 'c' is missing from response` {
+		t.Errorf("%v", err)
+	}
+	b.Reset()
+	b.WriteString("a")
+	if err := ReadCloserCompare(ioutil.NopCloser(b), "abcfile"); !strings.Contains(fmt.Sprint(err), `got EOF, want "b" at 1. Response is missing 2`) {
+		t.Errorf("%v", err)
+	}
 }
 
 /* Does not panic
