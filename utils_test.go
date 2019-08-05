@@ -321,6 +321,18 @@ func TestReadCloserToFilePanicFilename(t *testing.T) {
 	ReadCloserToFile("", nil)
 }
 
+func TestBufferCompareFileFail(t *testing.T) {
+	if err := BufferCompare(nil, "willfail"); !os.IsNotExist(err) {
+		t.Error(err)
+	}
+}
+
+func TestReadCloserCompareFileFail(t *testing.T) {
+	if err := ReadCloserCompare(nil, "willfail"); !os.IsNotExist(err) {
+		t.Error(err)
+	}
+}
+
 func TestReadCloserToFilePanicContent(t *testing.T) {
 	defer func() {
 		if r := recover(); !strings.Contains(fmt.Sprint(r), "invalid memory address or nil pointer dereference") {

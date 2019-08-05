@@ -133,7 +133,7 @@ func FileCompare(got, want string) error {
 func BufferCompare(got *bytes.Buffer, want string) error {
 	wantf, err := os.Open(want)
 	if err != nil {
-		return fmt.Errorf("Reference file %s open failed with %v", want, err)
+		return err
 	}
 	defer wantf.Close()
 
@@ -204,7 +204,7 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 func ReadCloserCompare(got io.ReadCloser, want string) error {
 	wantf, err := os.Open(want)
 	if err != nil {
-		return fmt.Errorf("Reference file %s open failed with %v", want, err)
+		return err
 	}
 	defer wantf.Close()
 
