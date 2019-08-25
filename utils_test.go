@@ -21,10 +21,9 @@ const (
 	myTech   = "MyTech"
 	wantf    = "originalpage.html"
 	updatedf = "updatedpage.html"
-
+	wd       = "output"
 	// Syscall package does not know other OS and messages are unreachable
 	// On Travis, syscall messages seem unusable
-	ERROR_PATH_NOT_FOUND = "The system cannot find the path specified"
 	ERROR_FILE_NOT_FOUND = "The system cannot find the file specified"
 
 	EEXIST = "no such file or directory"
@@ -36,7 +35,7 @@ var wantb []byte
 func TestMain(m *testing.M) {
 	resp, err := http.Get("https://about.google/intl/en_be/")
 
-	OutputDir("output")
+	OutputDir(wd)
 	if err == nil {
 		defer resp.Body.Close()
 		if _, err = os.Stat(wantf); os.IsNotExist(err) {
@@ -273,17 +272,9 @@ func BenchmarkGetPageReadCloserCompare(b *testing.B) {
 	}
 }
 
-// Panic-ing on non-existent directory
-func IsPathError(errm string) bool {
-	if runtime.GOOS == "windows" {
-		return strings.Contains(errm, ERROR_PATH_NOT_FOUND)
-	}
-	return strings.Contains(errm, EEXIST)
-}
-
 func TestOutputDir(t *testing.T) {
 	defer func() {
-		if err := fmt.Sprint(recover()); !IsPathError(err) {
+		if err := recover().(error); !os.IsNotExist(err) {
 			t.Errorf("Recovering failed with %v", err)
 		}
 	}()
@@ -299,9 +290,9 @@ func IsFileError(errm string) bool {
 	return strings.Contains(errm, EEXIST)
 }
 
-// Panic-ing on non-existent file
+// Panic-ing on invalid file
 func recoverFileSystem(t *testing.T) {
-	if err := fmt.Sprint(recover()); !IsFileError(err) {
+	if err := recover().(error); !os.IsNotExist(err) {
 		t.Errorf("Recovering failed with %v", err)
 	}
 }
@@ -333,14 +324,32 @@ func TestReadCloserCompareFileFail(t *testing.T) {
 	}
 }
 
+// Panic-ing on nil content is not increasing coverage
+func recoverNilContent(t *testing.T) {
+	if r := fmt.Sprint(recover()); !strings.Contains(r, "invalid memory address or nil pointer dereference") {
+		t.Errorf("Recovering failed with %v", r)
+	}
+	os.Remove("nilcontent") // File is created
+}
+
+/* Not testing
+func TestStringToFilePanicContent(t *testing.T) {
+	defer recoverFileSystem(t)
+	StringToFile("nilcontent", []byte(nil))
+}
+
+*/
+
+func TestBufferToFilePanicContent(t *testing.T) {
+	defer recoverNilContent(t)
+	BufferToFile("nilcontent", nil)
+	t.Fatalf("nil content did not panic")
+}
+
 func TestReadCloserToFilePanicContent(t *testing.T) {
-	defer func() {
-		if r := recover(); !strings.Contains(fmt.Sprint(r), "invalid memory address or nil pointer dereference") {
-			t.Errorf("Recovering failed with %v", r)
-		}
-		os.Remove("willpanic") // File is created
-	}()
-	ReadCloserToFile("willpanic", nil)
+	defer recoverNilContent(t)
+	_ = ReadCloserToFile("nilcontent", nil)
+	t.Fatalf("nil content did not panic")
 }
 
 func TestFileCompareDoesNotExist(t *testing.T) {
@@ -382,10 +391,13 @@ func createTestFiles() {
 }
 
 func removeTestFiles() {
-	os.Remove("afile")
-	os.Remove("abfile")
-	os.Remove("acfile")
-	os.Remove("abcfile")
+	p, err := os.Getwd()
+	if err != nil {
+		return
+	}
+	if filepath.Base(p) == wd {
+		os.RemoveAll(p)
+	}
 }
 
 func TestBufferCompareDifference(t *testing.T) {
@@ -450,15 +462,28 @@ func TestReadCloserCompareDifference(t *testing.T) {
 	}
 }
 
-/* Does not panic
+// Creating file write errors
 func TestStringToFilePanicContent(t *testing.T) {
+	t.Skip("setting file permissions does not fail test")
 	defer func() {
-		if r := recover(); r != nil {
-			t.Errorf("Recovering failed with %v", r)
+		err := recover()
+		if err == nil {
+			t.Fatalf("no error recovered %v", err)
 		}
+		if err.(error) != nil {
+			t.Errorf("Recovering failed with %v", err)
+		}
+		OutputDir("output")
 	}()
-	os.OpenFile("willpanic", os.O_RDONLY, 000)
+	err := os.Mkdir("willpanic", 0000) // Read only dir
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = os.Chdir("willpanic"); err != nil {
+		t.Fatal(err)
+	}
 	StringToFile("willpanic", []byte{'a'})
+	if err = os.Chdir(".."); err != nil {
+		t.Fatal(err)
+	}
 }
-
-*/

@@ -263,7 +263,7 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 			gotInfo, _ := os.Stat(gotf)
 			return fmt.Errorf("%s : got response is too long by %d", fileg, gotInfo.Size())
 		}
-		return fmt.Errorf("%s : got response is too short. No file written. %v", fileg, err)
+		return fmt.Errorf("%s : got response is too long. Writing file failed with %v", fileg, err)
 	}
 	return nil
 }
