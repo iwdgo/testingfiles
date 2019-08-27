@@ -417,6 +417,9 @@ func TestBufferCompareDifference(t *testing.T) {
 	if err := BufferCompare(b, "afile"); fmt.Sprint(err) != "got buffer is too long by 1" {
 		t.Errorf("%v", err)
 	}
+	if c, err := b.ReadByte(); err != nil || c != 'b' {
+		t.Errorf("unreadbyte failed: %q", c)
+	}
 	b.Reset()
 	b.WriteString("a")
 	if err := BufferCompare(b, "acfile"); fmt.Sprint(err) != `got EOF and last byte 'c' is missing` {
@@ -437,13 +440,16 @@ func TestReadCloserCompareDifference(t *testing.T) {
 	}
 	b.Reset()
 	b.WriteString("ac")
-	if err := ReadCloserCompare(ioutil.NopCloser(b), "abfile"); !strings.Contains(fmt.Sprint(err), `got "c", want "b" at 1`) {
+	if err := ReadCloserCompare(ioutil.NopCloser(b), "abfile"); !strings.Contains(fmt.Sprint(err),
+		`got "c", want "b" at 1`) {
 		t.Errorf("%v", err)
 	}
 	b.Reset()
 	b.WriteString("ab")
 	// Length should be 1 but the last byte read from the response is not written to file
-	if err := ReadCloserCompare(ioutil.NopCloser(b), "afile"); !strings.Contains(fmt.Sprint(err), `got response is too long by 0`) {
+	// but can be recovered in the error message
+	if err := ReadCloserCompare(ioutil.NopCloser(b), "afile"); !strings.Contains(fmt.Sprint(err),
+		`got response is too long by 0. Last read byte`) {
 		fn := "TestReadCloserCompareDifference"
 		if fs, errf := os.Stat(fn); errf == nil && fs.Size() == 0 {
 			os.Remove(fn)

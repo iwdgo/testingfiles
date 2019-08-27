@@ -176,7 +176,8 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 			}
 
 			if b1[0] != b2 {
-				// The erroneous char is missing from the file (want part).
+				_ = got.UnreadByte()
+				// The erroneous char is missing from the file (got part).
 				BufferToFile(fmt.Sprintf("got_%s", fileg), got)
 				return fmt.Errorf("got %q, want %q at %d", b2, b1, index)
 			}
@@ -189,14 +190,16 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 	_, err = got.ReadByte()
 	// If EOF is not returned, buffer is longer than the file which is exhausted.
 	if err != io.EOF {
+		_ = got.UnreadByte()
 		BufferToFile(fmt.Sprintf("got_%s", fileg), got)
-		return fmt.Errorf("got buffer is too long by %d", got.Len()+1)
+		return fmt.Errorf("got buffer is too long by %d", got.Len())
 	}
 	return nil
 }
 
 // ReadCloserCompare compares a ReadCloser to a file.
 // If an error occurs, got file is created and the error is returned.
+// Last read byte is absent from the got file but available in the error message.
 // If identical, nil is returned.
 // Logic and method are identical to *buffer.Bytes but duplicating the code avoids ReadAll.
 // First byte index is 0
@@ -261,7 +264,7 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 		err := ReadCloserToFile(gotf, got)
 		if err == nil {
 			gotInfo, _ := os.Stat(gotf)
-			return fmt.Errorf("%s : got response is too long by %d", fileg, gotInfo.Size())
+			return fmt.Errorf("%s : got response is too long by %d. Last read byte %q", fileg, gotInfo.Size(), gotb)
 		}
 		return fmt.Errorf("%s : got response is too long. Writing file failed with %v", fileg, err)
 	}
