@@ -128,6 +128,7 @@ func FileCompare(got, want string) error {
 
 // BufferCompare compares the buffer to a file.
 // If an error occurs, got file is created and the error is returned.
+// First char in the got file is the erroneous char.
 // If identical, nil is returned.
 // First byte index is 0
 func BufferCompare(got *bytes.Buffer, want string) error {
@@ -137,13 +138,10 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 	}
 	defer wantf.Close()
 
-	// Finding caller name to
-	fileg := "buffercomparedefault"
-	i, _, _, _ := runtime.Caller(1) // Skipping the calling test
-	if funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), "."); len(funcname) == 1 {
-		log.Printf("Func name not found. Using %s\n", fileg)
-	} else {
-		fileg = funcname[1]
+	// Build got filename.
+	fileg := callerName()
+	if fileg == "" {
+		fileg = "buffercomparedefault"
 	}
 
 	b1 := make([]byte, 1)
@@ -176,8 +174,7 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 			}
 
 			if b1[0] != b2 {
-				_ = got.UnreadByte()
-				// The erroneous char is missing from the file (got part).
+				_ = got.UnreadByte() // recover the erroneous char
 				BufferToFile(fmt.Sprintf("got_%s", fileg), got)
 				return fmt.Errorf("got %q, want %q at %d", b2, b1, index)
 			}
@@ -211,18 +208,15 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 	}
 	defer wantf.Close()
 
-	// Finding caller name to
-	fileg := "readclosercomparedefault"
-	i, _, _, _ := runtime.Caller(1) // Skipping the calling test
-	if funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), "."); len(funcname) == 1 {
-		log.Printf("Func name not found")
-	} else {
-		fileg = funcname[1]
+	// Build got filename.
+	fileg := callerName()
+	if fileg == "" {
+		fileg = "readclosercomparedefault"
 	}
+	gotf := fmt.Sprintf("got_%s", fileg)
 
 	// Actual comparison
 	wantb, gotb := make([]byte, 1), make([]byte, 1)
-	gotf := fmt.Sprintf("got_%s", fileg)
 	n, index := 0, 0    // Index in file to locate error
 	for err != io.EOF { // Until the end of the file
 		_, err = wantf.Read(wantb)
@@ -269,4 +263,14 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 		return fmt.Errorf("%s : got response is too long. Writing file failed with %v", fileg, err)
 	}
 	return nil
+}
+
+func callerName() (f string) {
+	i, _, _, _ := runtime.Caller(2) // Skipping test and testingfile func
+	funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), ".")
+	if len(funcname) == 1 {
+		log.Printf("callerName: func name not found")
+		return // name is empty
+	}
+	return funcname[1]
 }
