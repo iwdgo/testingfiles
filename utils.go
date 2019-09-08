@@ -139,11 +139,7 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 	defer wantf.Close()
 
 	// Build got filename.
-	fileg := callerName()
-	if fileg == "" {
-		fileg = "buffercomparedefault"
-	}
-
+	fileg := callerName("buffercomparedefault")
 	b1 := make([]byte, 1)
 	var b2 byte
 	index := 0          // Index in file to locate error
@@ -209,10 +205,7 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 	defer wantf.Close()
 
 	// Build got filename.
-	fileg := callerName()
-	if fileg == "" {
-		fileg = "readclosercomparedefault"
-	}
+	fileg := callerName("readclosercomparedefault")
 	gotf := fmt.Sprintf("got_%s", fileg)
 
 	// Actual comparison
@@ -265,12 +258,14 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 	return nil
 }
 
-func callerName() (f string) {
+// callerName returns the name of the function that called the testingfiles func.
+// It returns the default if none is found.
+func callerName(d string) (f string) {
 	i, _, _, _ := runtime.Caller(2) // Skipping test and testingfile func
 	funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), ".")
 	if len(funcname) == 1 {
 		log.Printf("callerName: func name not found")
-		return // name is empty
+		return d // name is empty
 	}
 	return funcname[1]
 }
