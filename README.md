@@ -2,6 +2,10 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/iwdgo/testingfiles)](https://goreportcard.com/report/github.com/iwdgo/testingfiles)
 [![codecov](https://codecov.io/gh/iWdGo/testingfiles/branch/master/graph/badge.svg)](https://codecov.io/gh/iWdGo/testingfiles)
 
+[![Build Status](https://travis-ci.com/iWdGo/testingfiles.svg?branch=master)](https://travis-ci.com/iWdGo/testingfiles)
+[![Build Status](https://api.cirrus-ci.com/github/iWdGo/testingfiles.svg)](https://cirrus-ci.com/github/iWdGo/testingfiles)
+[![Build status](https://ci.appveyor.com/api/projects/status/eimlas99romrrro0?svg=true)](https://ci.appveyor.com/project/iWdGo/testingfiles)
+
 # Using reference files for large output
 
 Keeping reference on a file is useful becayse of the size of the output or for recording purposes.
@@ -19,7 +23,7 @@ The directory is not created but its existence is checked.
 If the working directory (not the temp, nor the executing) is unavailable,
 tests will panic.
 
-In CI (Travis), the working directory is created.
+In CI, the working directory is created in the script.
 
 ## Testing of the module
 
