@@ -25,6 +25,9 @@ jobs:
         fi
         mkdir output
 
+    - name: Vet
+        run: go vet .
+
     - name: Build
       run: go build -v .
 
