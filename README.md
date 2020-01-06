@@ -5,7 +5,7 @@
 [![Build Status](https://travis-ci.com/iWdGo/testingfiles.svg?branch=master)](https://travis-ci.com/iWdGo/testingfiles)
 [![Build Status](https://api.cirrus-ci.com/github/iWdGo/testingfiles.svg)](https://cirrus-ci.com/github/iWdGo/testingfiles)
 [![Build status](https://ci.appveyor.com/api/projects/status/eimlas99romrrro0?svg=true)](https://ci.appveyor.com/project/iWdGo/testingfiles)
-![Build status](https://github.com/iwdgo/htmlutils/workflows/Go/badge.svg)
+![Build status](https://github.com/iwdgo/testingfiles/workflows/Go/badge.svg)
 
 # Using reference files for large output
 
@@ -87,7 +87,9 @@ Testing can be online or offline.
 Online is used to read a reference page. 
 Offline requires to provide the reference file.
 
-Benchmarking is fairly inconclusive and is more of a TODO.
+Testing usage is demonstrated in modules of [largeoutput](https://github.com/iwdgo/largeoutput) repository.
+
+Benchmarking is fairly inconclusive and is more of a _TODO_.
 
 ```
 go version go1.13beta1 windows/amd64
