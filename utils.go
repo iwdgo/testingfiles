@@ -84,16 +84,16 @@ func ReadCloserToFile(fname string, content io.ReadCloser) error {
 // Names of the files to compare are passed as arguments and searched in the working directory.
 func FileCompare(got, want string) error {
 	filew, err := os.Open(want)
-	defer filew.Close()
 	if err != nil {
 		return fmt.Errorf("want file %s open failed with %v", want, err)
 	}
+	defer filew.Close()
 
 	fileg, err := os.Open(got)
-	defer fileg.Close()
 	if err != nil {
 		return fmt.Errorf("got file %s open failed with %v", got, err)
 	}
+	defer fileg.Close()
 
 	bw, bg := make([]byte, 1), make([]byte, 1)
 	index := 0          // Index in file to locate error

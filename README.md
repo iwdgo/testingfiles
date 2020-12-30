@@ -1,4 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/iWdGo/testingfiles?status.svg)](https://godoc.org/github.com/iWdGo/testingfiles)
+[![Go Reference](https://pkg.go.dev/badge/iwdgo/testingfiles.svg)](https://pkg.go.dev/iwdgo/testingfiles)
 [![Go Report Card](https://goreportcard.com/badge/github.com/iwdgo/testingfiles)](https://goreportcard.com/report/github.com/iwdgo/testingfiles)
 [![codecov](https://codecov.io/gh/iWdGo/testingfiles/branch/master/graph/badge.svg)](https://codecov.io/gh/iWdGo/testingfiles)
 
@@ -17,7 +17,7 @@ The `bytes.Buffer` of the `html.Response` can be compared directly to the `want`
 When comparison fails, a file is created with `got_` prefix from the byte where the first difference
 appeared. No further check on the file is done.
 
-When running your tests for the first time, test will fail as not `want` file is usuablly available.
+When running tests for the first time, they might fail as no `want` file is usually available.
 The produced `got` file can be renamed into a `want` file to have a second successful run.
 
 ### Offline test
@@ -74,8 +74,8 @@ func tearDown(t *testing.T, resp *http.Response) {
 
 ## Working directory
 
-Reference files are expected in a working directory with default `output`.
-Using a subdirectory avoids to have the data files mixed with source code.
+Reference files are expected to reside in a working directory with default `output`.
+Using a subdirectory avoids having the data files mixed with source code.
 The directory is not created but its existence is checked.
 If the working directory is unavailable, tests will panic.
 In CI scripts, the working directory is created before running the tests.
@@ -89,7 +89,8 @@ Offline requires to provide the reference file.
 
 Testing usage is demonstrated in modules of [largeoutput](https://github.com/iwdgo/largeoutput) repository.
 
-Benchmarking is fairly inconclusive and is more of a _TODO_.
+Benchmarking between string and bytes.Buffer is inconclusive.
+This is inline with documented behavior.
 
 ```
 go version go1.13beta1 windows/amd64
