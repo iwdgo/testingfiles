@@ -34,10 +34,10 @@ func OutputDir(s string) {
 // StringToFile produces a file named fname with the content
 func StringToFile(fname string, content []byte) {
 	wfile, err := os.Create(fname)
-	defer wfile.Close()
 	if err != nil {
 		panic(err)
 	}
+	defer wfile.Close()
 
 	_, err = wfile.Write(content)
 	if err != nil {
@@ -62,10 +62,10 @@ func BufferToFile(fname string, content *bytes.Buffer) {
 // ReadCloserToFile creates a file named fname with the content
 func ReadCloserToFile(fname string, content io.ReadCloser) error {
 	wfile, err := os.Create(fname)
-	defer wfile.Close()
 	if err != nil {
 		panic(err)
 	}
+	defer wfile.Close()
 	c, err := ioutil.ReadAll(content)
 	if err != nil {
 		panic(err)
@@ -235,7 +235,7 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 				return fmt.Errorf("%s: %v\n", fileg, err)
 			}
 			if !bytes.Equal(gotb, wantb) {
-				ReadCloserToFile(gotf, got)
+				_ = ReadCloserToFile(gotf, got)
 				return fmt.Errorf("%s : got %q, want %q at %d", fileg, gotb, wantb, index)
 			}
 			index++
