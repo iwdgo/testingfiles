@@ -484,10 +484,9 @@ func TestStringToFilePanicContent(t *testing.T) {
 		if err == nil {
 			t.Fatalf("no error recovered %v", err)
 		}
-		if err.(error) != nil {
+		if !os.IsPermission(err.(error)) {
 			t.Errorf("Recovering failed with %v", err)
 		}
-		OutputDir("output")
 	}()
 	err := os.Mkdir("willpanic", 0500) // Read only dir
 	if err != nil {
