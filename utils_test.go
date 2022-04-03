@@ -489,7 +489,7 @@ func TestStringToFilePanicContent(t *testing.T) {
 		}
 		OutputDir("output")
 	}()
-	err := os.Mkdir("willpanic", 0400) // Read only dir
+	err := os.Mkdir("willpanic", 0500) // Read only dir
 	if err != nil {
 		t.Fatal(err)
 	}
