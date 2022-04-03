@@ -303,16 +303,19 @@ func recoverFileSystem(t *testing.T) {
 func TestStringToFilePanicFilename(t *testing.T) {
 	defer recoverFileSystem(t)
 	StringToFile("", nil)
+	t.Errorf("StringToFile did not panic")
 }
 
 func TestBufferToFilePanicFilename(t *testing.T) {
 	defer recoverFileSystem(t)
 	BufferToFile("", nil)
+	t.Errorf("BufferToFile did not panic")
 }
 
 func TestReadCloserToFilePanicFilename(t *testing.T) {
 	defer recoverFileSystem(t)
-	ReadCloserToFile("", nil)
+	_ = ReadCloserToFile("", nil)
+	t.Errorf("ReadCloserToFile did not panic")
 }
 
 func TestBufferCompareFileFail(t *testing.T) {
@@ -332,7 +335,7 @@ func recoverNilContent(t *testing.T) {
 	if r := fmt.Sprint(recover()); !strings.Contains(r, "invalid memory address or nil pointer dereference") {
 		t.Errorf("Recovering failed with %v", r)
 	}
-	os.Remove("nilcontent") // File is created
+	_ = os.Remove("nilcontent") // File is created
 }
 
 /* Not testing
@@ -399,7 +402,7 @@ func removeTestFiles() {
 		return
 	}
 	if filepath.Base(p) == wd {
-		os.RemoveAll(p)
+		_ = os.RemoveAll(p)
 	}
 }
 
@@ -455,7 +458,7 @@ func TestReadCloserCompareDifference(t *testing.T) {
 		`got response is too long by 0. Last read byte`) {
 		fn := "TestReadCloserCompareDifference"
 		if fs, errf := os.Stat(fn); errf == nil && fs.Size() == 0 {
-			os.Remove(fn)
+			_ = os.Remove(fn)
 		}
 		t.Errorf("%v", err)
 	}
