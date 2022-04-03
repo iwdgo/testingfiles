@@ -106,7 +106,7 @@ func TestPageStringToFile(t *testing.T) {
 	}
 }
 
-// Comparing a file to itelf must return nil
+// Comparing a file to itself must return nil
 func TestFileCompare(t *testing.T) {
 	if err := FileCompare(wantf, wantf); err != nil {
 		t.Error(err)
@@ -476,7 +476,9 @@ func TestReadCloserCompareDifference(t *testing.T) {
 
 // Creating file write errors
 func TestStringToFilePanicContent(t *testing.T) {
-	t.Skip("setting file permissions does not fail test")
+	if runtime.GOOS == "windows" {
+		t.Skip("no read-only directories on windows (https://github.com/golang/go/issues/35042)")
+	}
 	defer func() {
 		err := recover()
 		if err == nil {
