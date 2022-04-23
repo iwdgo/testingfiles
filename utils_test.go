@@ -22,11 +22,6 @@ const (
 	wantf    = "originalpage.html"
 	updatedf = "updatedpage.html"
 	wd       = "output"
-	// Syscall package does not know other OS and messages are unreachable
-	// On Travis, syscall messages seem unusable
-	ERROR_FILE_NOT_FOUND = "The system cannot find the file specified"
-
-	EEXIST = "no such file or directory"
 )
 
 // Only one read on the network or filled with the existing want file
@@ -284,15 +279,6 @@ func TestOutputDir(t *testing.T) {
 	OutputDir("doesnotexist")
 }
 
-// Errors on files are compared to go lang values. Only Windows and Linux message are foreseen.
-// The error returned by FileCompare is not the file error only to provide relevant information.
-func IsFileError(errm string) bool {
-	if runtime.GOOS == "windows" {
-		return strings.Contains(errm, ERROR_FILE_NOT_FOUND)
-	}
-	return strings.Contains(errm, EEXIST)
-}
-
 // Panic-ing on invalid file
 func recoverFileSystem(t *testing.T) {
 	if err := recover().(error); !os.IsNotExist(err) {
@@ -360,10 +346,10 @@ func TestReadCloserToFilePanicContent(t *testing.T) {
 
 func TestFileCompareDoesNotExist(t *testing.T) {
 	OutputDir("output")
-	if err := fmt.Sprint(FileCompare("doesnotmatter", "doesnotexist")); !IsFileError(err) {
+	if err := FileCompare("doesnotmatter", "doesnotexist"); !os.IsNotExist(err) {
 		t.Errorf("Non-existent got file not returned but %v", err)
 	}
-	if err := fmt.Sprint(FileCompare("doesnotexist", "originalpage.html")); !IsFileError(err) {
+	if err := FileCompare("doesnotexist", "originalpage.html"); !os.IsNotExist(err) {
 		t.Errorf("Non-existent want file not returned but %v", err)
 	}
 }
