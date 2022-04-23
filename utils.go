@@ -85,13 +85,13 @@ func ReadCloserToFile(fname string, content io.ReadCloser) error {
 func FileCompare(got, want string) error {
 	filew, err := os.Open(want)
 	if err != nil {
-		return fmt.Errorf("want file %s open failed with %v", want, err)
+		return err
 	}
 	defer filew.Close()
 
 	fileg, err := os.Open(got)
 	if err != nil {
-		return fmt.Errorf("got file %s open failed with %v", got, err)
+		return err
 	}
 	defer fileg.Close()
 
@@ -262,6 +262,7 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 // It returns the default if none is found.
 func callerName(d string) (f string) {
 	i, _, _, _ := runtime.Caller(2) // Skipping test and testingfile func
+	// TODO Migrate to Caller name
 	funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), ".")
 	if len(funcname) == 1 {
 		log.Printf("callerName: func name not found")
