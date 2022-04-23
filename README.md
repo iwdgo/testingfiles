@@ -1,18 +1,16 @@
-[![Go Reference](https://pkg.go.dev/badge/iwdgo/testingfiles.svg)](https://pkg.go.dev/iwdgo/testingfiles)
+[![Go Reference](https://pkg.go.dev/badge/github.com/iwdgo/testingfiles.svg)](https://pkg.go.dev/github.com/iwdgo/testingfiles)
 [![Go Report Card](https://goreportcard.com/badge/github.com/iwdgo/testingfiles)](https://goreportcard.com/report/github.com/iwdgo/testingfiles)
-[![codecov](https://codecov.io/gh/iWdGo/testingfiles/branch/master/graph/badge.svg)](https://codecov.io/gh/iWdGo/testingfiles)
+[![codecov](https://codecov.io/gh/iwdgo/testingfiles/branch/master/graph/badge.svg)](https://codecov.io/gh/iwdgo/testingfiles)
 
-[![Build Status](https://travis-ci.com/iWdGo/testingfiles.svg?branch=master)](https://travis-ci.com/iWdGo/testingfiles)
-[![Build Status](https://api.cirrus-ci.com/github/iWdGo/testingfiles.svg)](https://cirrus-ci.com/github/iWdGo/testingfiles)
+[![Build Status](https://app.travis-ci.com/iwdgo/testingfiles.svg?branch=master)](https://app.travis-ci.com/iwdgo/testingfiles)
+[![Build Status](https://api.cirrus-ci.com/github/iwdgo/testingfiles.svg)](https://cirrus-ci.com/github/iwdgo/testingfiles)
 [![Build status](https://ci.appveyor.com/api/projects/status/eimlas99romrrro0?svg=true)](https://ci.appveyor.com/project/iWdGo/testingfiles)
 ![Build status](https://github.com/iwdgo/testingfiles/workflows/Go/badge.svg)
 
 # Using reference files for large output
 
-Reference data for a test can be on file for various reasons: large data set, recording, post mortem,...
-`got` source can be `File`, `Buffer`, `ReadCloser` and is compared to a `want` file.
-Comparison is more efficient when the `got` file is not needed.
-The `bytes.Buffer` of the `html.Response` can be compared directly to the `want` file.
+A `want` reference file is compared to data from a `got` source.
+Comparison is provided for `File`, `Buffer` or `ReadCloser` where a file is the least efficient.
 
 When comparison fails, a file is created with `got_` prefix from the byte where the first difference
 appeared. No further check on the file is done.
@@ -74,7 +72,7 @@ func tearDown(t *testing.T, resp *http.Response) {
 
 ## Working directory
 
-Reference files are expected to reside in a working directory with default `output`.
+Reference files are expected to reside in a working directory which defaults to `output`.
 Using a subdirectory avoids having the data files mixed with source code.
 The directory is not created but its existence is checked.
 If the working directory is unavailable, tests will panic.
@@ -89,8 +87,7 @@ Offline requires to provide the reference file.
 
 Testing usage is demonstrated in modules of [largeoutput](https://github.com/iwdgo/largeoutput) repository.
 
-Benchmarking between string and bytes.Buffer is inconclusive.
-This is inline with documented behavior.
+Benchmarking between string and bytes.Buffer is inconclusive inline with documented behavior.
 
 ```
 go version go1.13beta1 windows/amd64
