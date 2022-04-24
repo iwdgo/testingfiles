@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -67,7 +66,7 @@ func ReadCloserToFile(fname string, content io.ReadCloser) error {
 		panic(err)
 	}
 	defer wfile.Close()
-	c, err := ioutil.ReadAll(content)
+	c, err := io.ReadAll(content)
 	if err != nil {
 		panic(err)
 	}
