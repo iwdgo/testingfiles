@@ -345,7 +345,7 @@ func TestReadCloserToFilePanicContent(t *testing.T) {
 }
 
 func TestFileCompareDoesNotExist(t *testing.T) {
-	OutputDir("output")
+	OutputDir(wd)
 	if err := FileCompare("doesnotmatter", "doesnotexist"); !os.IsNotExist(err) {
 		t.Errorf("Non-existent got file not returned but %v", err)
 	}
@@ -368,7 +368,7 @@ func TestFileCompareDifference(t *testing.T) {
 }
 
 func createTestFiles() {
-	OutputDir("output")
+	OutputDir(wd)
 	b := new(bytes.Buffer)
 	b.WriteString("a")
 	BufferToFile("afile", b)

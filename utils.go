@@ -13,17 +13,18 @@ import (
 	"strings"
 )
 
-// OutputDir corrects the default dir to the base folder s where reference files (want files) are stored.
-// The file is searched above and below working directory.
+// OutputDir changes the default dir to the folder where reference files (want files) are stored.
+// Only the base of the directory is expected. If found, change default directory to it.
+// When not found, check if ../test contains the folder.
 func OutputDir(s string) {
-	ex, err := os.Getwd() // Executable() is where Go runs not where the files are created
+	ex, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
 	if filepath.Base(ex) != s { // No need to change
-		err = os.Chdir("./" + s)
+		err = os.Chdir(filepath.Join("./", s))
 		if err != nil {
-			err = os.Chdir("../test/" + s) // go to test/<want-files>
+			err = os.Chdir(filepath.Join("../test/", s))
 			if err != nil {
 				panic(err) // subdirectory is probably missing
 			}

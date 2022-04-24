@@ -72,7 +72,7 @@ func tearDown(t *testing.T, resp *http.Response) {
 
 ## Working directory
 
-Reference files are expected to reside in a working directory which defaults to `output`.
+Reference files are expected to reside in a working directory which defaults to `./output`.
 Using a subdirectory avoids having the data files mixed with source code.
 The directory is not created but its existence is checked.
 If the working directory is unavailable, tests will panic.
