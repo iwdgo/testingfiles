@@ -77,7 +77,7 @@ func TestMain(m *testing.M) {
 // Buffer is used as a string and produces a file
 // The check is using FileCompare to detect an error
 // The error is used for the test and this method by the Benchmark
-func GetPageStringToFile(name string) error {
+func getPageStringToFile(name string) error {
 	// got file is identical to want file - no page update
 	StringToFile(name, wantb)
 	return FileCompare(name, wantf) // second element is the func name
@@ -90,7 +90,7 @@ func TestPageStringToFile(t *testing.T) {
 		log.Println(err)
 	}
 	// First run fails when file is created.
-	err = GetPageStringToFile(t.Name())
+	err = getPageStringToFile(t.Name())
 	travis := len(os.Getenv("TRAVIS_GO_VERSION")) != 0
 	if err != nil && !travis && !strings.Contains(fmt.Sprintf("%v", err), "want file is larger by") {
 		t.Error(err)
@@ -108,7 +108,7 @@ func TestFileCompare(t *testing.T) {
 }
 
 // Buffer to file, iso String. Then comparing files.
-func GetPageBufferToFile(name string) error {
+func getPageBufferToFile(name string) error {
 	// got file is rewritten with the updated page
 	// Replaces techname to get a different page. A reference file is created.
 	wantbuf := new(bytes.Buffer)
@@ -207,7 +207,7 @@ func TestReadCloserCompare(t *testing.T) {
 // Buffer has a minor advantage over string.
 func BenchmarkGetPageStringToFile(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		if err := GetPageStringToFile("stringtofile.html"); err != nil {
+		if err := getPageStringToFile("stringtofile.html"); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -215,7 +215,7 @@ func BenchmarkGetPageStringToFile(b *testing.B) {
 
 func BenchmarkGetPageBufferToFile(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		if err := GetPageBufferToFile(updatedf); err != nil {
+		if err := getPageBufferToFile(updatedf); err != nil {
 			b.Fatal(err)
 		}
 	}
