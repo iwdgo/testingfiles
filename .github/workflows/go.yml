@@ -28,6 +28,6 @@ jobs:
         run: go install
 
       - name: Test
-        run:
+        run: |
           mkdir output
           go test -cover -race
