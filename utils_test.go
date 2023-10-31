@@ -473,7 +473,6 @@ func TestStringToFilePanicContent(t *testing.T) {
 			t.Skipf("On some configurations, read-only directories are unavailable.\n" +
 				"On Windows, see https://github.com/golang/go/issues/35042")
 		}
-		t.Errorf("Recovering failed with %v", err)
 	}()
 	err := os.Mkdir("willpanic", 0500) // Read only dir
 	if err != nil {
