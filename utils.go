@@ -37,7 +37,12 @@ func StringToFile(fname string, content []byte) {
 	if err != nil {
 		panic(err)
 	}
-	defer wfile.Close()
+	defer func() {
+		err = wfile.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	_, err = wfile.Write(content)
 	if err != nil {
@@ -51,7 +56,12 @@ func BufferToFile(fname string, content *bytes.Buffer) {
 	if err != nil {
 		panic(err)
 	}
-	defer wfile.Close()
+	defer func() {
+		err = wfile.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	_, err = wfile.Write(content.Bytes())
 	if err != nil {
@@ -65,7 +75,12 @@ func ReadCloserToFile(fname string, content io.ReadCloser) error {
 	if err != nil {
 		panic(err)
 	}
-	defer wfile.Close()
+	defer func() {
+		err = wfile.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 	c, err := io.ReadAll(content)
 	if err != nil {
 		panic(err)
@@ -87,13 +102,17 @@ func FileCompare(got, want string) error {
 	if err != nil {
 		return err
 	}
-	defer filew.Close()
+	defer func() {
+		_ = filew.Close()
+	}()
 
 	fileg, err := os.Open(got)
 	if err != nil {
 		return err
 	}
-	defer fileg.Close()
+	defer func() {
+		_ = filew.Close()
+	}()
 
 	bw, bg := make([]byte, 1), make([]byte, 1)
 	index := 0          // Index in file to locate error
@@ -136,7 +155,9 @@ func BufferCompare(got *bytes.Buffer, want string) error {
 	if err != nil {
 		return err
 	}
-	defer wantf.Close()
+	defer func() {
+		_ = wantf.Close()
+	}()
 
 	// Build got filename.
 	fileg := callerName("buffercomparedefault")
@@ -202,7 +223,9 @@ func ReadCloserCompare(got io.ReadCloser, want string) error {
 	if err != nil {
 		return err
 	}
-	defer wantf.Close()
+	defer func() {
+		_ = wantf.Close()
+	}()
 
 	// Build got filename.
 	fileg := callerName("readclosercomparedefault")

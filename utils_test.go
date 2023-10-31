@@ -32,7 +32,9 @@ func TestMain(m *testing.M) {
 
 	OutputDir(wd)
 	if err == nil {
-		defer resp.Body.Close()
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 		if _, err = os.Stat(wantf); os.IsNotExist(err) {
 			// File missing, create it
 			log.Printf("creating %s file\n", wantf)
