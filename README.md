@@ -4,8 +4,8 @@
 
 [![Build Status](https://app.travis-ci.com/iwdgo/testingfiles.svg?branch=master)](https://app.travis-ci.com/iwdgo/testingfiles)
 [![Build Status](https://api.cirrus-ci.com/github/iwdgo/testingfiles.svg)](https://cirrus-ci.com/github/iwdgo/testingfiles)
-[![Build status](https://ci.appveyor.com/api/projects/status/eimlas99romrrro0?svg=true)](https://ci.appveyor.com/project/iWdGo/testingfiles)
-![Build status](https://github.com/iwdgo/testingfiles/workflows/Go/badge.svg)
+[![Build status](https://ci.appveyor.com/api/projects/status/eimlas99romrrro0?svg=true)](https://ci.appveyor.com/project/iwdgo/testingfiles)
+[![Go](https://github.com/iwdgo/testingfiles/actions/workflows/go.yml/badge.svg)](https://github.com/iwdgo/testingfiles/actions/workflows/go.yml)
 
 # Using reference files for large output
 
