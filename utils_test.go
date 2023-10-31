@@ -6,7 +6,7 @@ package testingfiles
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 			}
 		}
 		// File updates will occur in the tests
-		wantb, err = ioutil.ReadAll(resp.Body)
+		wantb, err = io.ReadAll(resp.Body)
 		if err != nil {
 			log.Fatalf("%v\n", err)
 		}
@@ -163,7 +163,7 @@ func TestBufferCompare(t *testing.T) {
 func TestReadCloserToFile(t *testing.T) {
 	b := new(bytes.Buffer)
 	b.Write(wantb)
-	if err := ReadCloserToFile("gotbuffer.html", ioutil.NopCloser(b)); err != nil {
+	if err := ReadCloserToFile("gotbuffer.html", io.NopCloser(b)); err != nil {
 		t.Error(err)
 	}
 }
@@ -177,7 +177,7 @@ func TestReadCloserCompareNoDiff(t *testing.T) {
 		log.Println(err)
 	}
 	BufferToFile(t.Name(), wantbuf)
-	if err := ReadCloserCompare(ioutil.NopCloser(wantbuf), wantf); err == nil {
+	if err := ReadCloserCompare(io.NopCloser(wantbuf), wantf); err == nil {
 		t.Error("no difference found")
 	}
 	if err = os.Remove(t.Name()); err != nil {
@@ -194,7 +194,7 @@ func TestReadCloserCompare(t *testing.T) {
 		log.Println(err)
 	}
 	BufferToFile(t.Name(), wantbuf)
-	if err := ReadCloserCompare(ioutil.NopCloser(wantbuf), t.Name()); err != nil {
+	if err := ReadCloserCompare(io.NopCloser(wantbuf), t.Name()); err != nil {
 		t.Errorf("difference found: %v", err)
 	}
 	if err = os.Remove(t.Name()); err != nil {
@@ -258,7 +258,7 @@ func GetPageReadCloserCompare() error {
 	if _, err := os.Stat(fn); err != nil {
 		BufferToFile(fn, wantbuf)
 	}
-	return ReadCloserCompare(ioutil.NopCloser(wantbuf), fn)
+	return ReadCloserCompare(io.NopCloser(wantbuf), fn)
 }
 
 func BenchmarkGetPageReadCloserCompare(b *testing.B) {
@@ -426,12 +426,12 @@ func TestBufferCompareDifference(t *testing.T) {
 func TestReadCloserCompareDifference(t *testing.T) {
 	b := new(bytes.Buffer)
 	b.WriteString("ac")
-	if err := ReadCloserCompare(ioutil.NopCloser(b), "acfile"); err != nil {
+	if err := ReadCloserCompare(io.NopCloser(b), "acfile"); err != nil {
 		t.Errorf("%v", err)
 	}
 	b.Reset()
 	b.WriteString("ac")
-	if err := ReadCloserCompare(ioutil.NopCloser(b), "abfile"); !strings.Contains(fmt.Sprint(err),
+	if err := ReadCloserCompare(io.NopCloser(b), "abfile"); !strings.Contains(fmt.Sprint(err),
 		`got "c", want "b" at 1`) {
 		t.Errorf("%v", err)
 	}
@@ -439,7 +439,7 @@ func TestReadCloserCompareDifference(t *testing.T) {
 	b.WriteString("ab")
 	// Length should be 1 but the last byte read from the response is not written to file
 	// but can be recovered in the error message
-	if err := ReadCloserCompare(ioutil.NopCloser(b), "afile"); !strings.Contains(fmt.Sprint(err),
+	if err := ReadCloserCompare(io.NopCloser(b), "afile"); !strings.Contains(fmt.Sprint(err),
 		`got response is too long by 0. Last read byte`) {
 		fn := "TestReadCloserCompareDifference"
 		if fs, errf := os.Stat(fn); errf == nil && fs.Size() == 0 {
@@ -449,12 +449,12 @@ func TestReadCloserCompareDifference(t *testing.T) {
 	}
 	b.Reset()
 	b.WriteString("a")
-	if err := ReadCloserCompare(ioutil.NopCloser(b), "acfile"); !strings.Contains(fmt.Sprint(err), `got EOF, want "c" at 1. Response is missing 1`) {
+	if err := ReadCloserCompare(io.NopCloser(b), "acfile"); !strings.Contains(fmt.Sprint(err), `got EOF, want "c" at 1. Response is missing 1`) {
 		t.Errorf("%v", err)
 	}
 	b.Reset()
 	b.WriteString("a")
-	if err := ReadCloserCompare(ioutil.NopCloser(b), "abcfile"); !strings.Contains(fmt.Sprint(err), `got EOF, want "b" at 1. Response is missing 2`) {
+	if err := ReadCloserCompare(io.NopCloser(b), "abcfile"); !strings.Contains(fmt.Sprint(err), `got EOF, want "b" at 1. Response is missing 2`) {
 		t.Errorf("%v", err)
 	}
 }
