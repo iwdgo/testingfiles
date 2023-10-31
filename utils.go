@@ -21,9 +21,9 @@ func OutputDir(s string) {
 		panic(err)
 	}
 	if filepath.Base(ex) != s { // No need to change
-		err = os.Chdir(filepath.Join("./", s))
+		err = os.Chdir(filepath.Join(ex, s))
 		if err != nil {
-			err = os.Chdir(filepath.Join("../test/", s))
+			err = os.Chdir(filepath.Join(filepath.Dir(ex), "test", s))
 			if err != nil {
 				panic(err) // subdirectory is probably missing
 			}
