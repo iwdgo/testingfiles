@@ -226,7 +226,7 @@ func GetPageBufferCompare() error {
 	i, _, _, _ := runtime.Caller(0)
 	funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), ".")
 	if len(funcname) == 1 {
-		return fmt.Errorf("Func name not found")
+		return fmt.Errorf("func name not found")
 	}
 	fn := funcname[1]
 	wantbuf := new(bytes.Buffer)
@@ -250,7 +250,7 @@ func GetPageReadCloserCompare() error {
 	i, _, _, _ := runtime.Caller(0)
 	funcname := strings.SplitAfter(filepath.Base(runtime.FuncForPC(i).Name()), ".")
 	if len(funcname) == 1 {
-		return fmt.Errorf("Func name not found")
+		return fmt.Errorf("func name not found")
 	}
 	fn := funcname[1]
 	wantbuf := new(bytes.Buffer)
