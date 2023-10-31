@@ -85,7 +85,7 @@ Testing can be online or offline.
 Online is used to read a reference page. 
 Offline requires to provide the reference file.
 
-Testing usage is demonstrated in modules of [largeoutput](https://github.com/iwdgo/largeoutput) repository.
+Other examples are available in modules of [largeoutput](https://github.com/iwdgo/largeoutput) repository.
 
 Benchmarking between string and bytes.Buffer is inconclusive inline with documented behavior.
 
