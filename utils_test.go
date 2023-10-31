@@ -51,9 +51,6 @@ func TestMain(m *testing.M) {
 	} else {
 		// No network mainly... Let us fill the buffer with the file
 		perm := os.FileMode(0444)
-		if runtime.GOOS == "windows" {
-			perm = 0400
-		}
 		f, err := os.OpenFile(wantf, os.O_RDONLY, perm)
 		if err != nil {
 			log.Fatalf("%v\n", err)
