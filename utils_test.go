@@ -464,17 +464,16 @@ func TestReadCloserCompareDifference(t *testing.T) {
 
 // Creating file write errors
 func TestStringToFilePanicContent(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("no read-only directories on windows (https://github.com/golang/go/issues/35042)")
-	}
 	defer func() {
 		err := recover()
 		if err == nil {
 			t.Fatalf("no error recovered %v", err)
 		}
 		if !os.IsPermission(err.(error)) {
-			t.Errorf("Recovering failed with %v", err)
+			t.Skipf("On some configurations, read-only directories are unavailable.\n" +
+				"On Windows, see https://github.com/golang/go/issues/35042")
 		}
+		t.Errorf("Recovering failed with %v", err)
 	}()
 	err := os.Mkdir("willpanic", 0500) // Read only dir
 	if err != nil {
