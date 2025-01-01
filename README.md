@@ -2,7 +2,6 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/iwdgo/testingfiles)](https://goreportcard.com/report/github.com/iwdgo/testingfiles)
 [![codecov](https://codecov.io/gh/iwdgo/testingfiles/branch/master/graph/badge.svg)](https://codecov.io/gh/iwdgo/testingfiles)
 
-[![Build Status](https://app.travis-ci.com/iwdgo/testingfiles.svg?branch=master)](https://app.travis-ci.com/iwdgo/testingfiles)
 [![Build Status](https://api.cirrus-ci.com/github/iwdgo/testingfiles.svg)](https://cirrus-ci.com/github/iwdgo/testingfiles)
 [![Build status](https://ci.appveyor.com/api/projects/status/eimlas99romrrro0?svg=true)](https://ci.appveyor.com/project/iwdgo/testingfiles)
 [![Go](https://github.com/iwdgo/testingfiles/actions/workflows/go.yml/badge.svg)](https://github.com/iwdgo/testingfiles/actions/workflows/go.yml)

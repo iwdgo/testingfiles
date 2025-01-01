@@ -91,8 +91,7 @@ func TestPageStringToFile(t *testing.T) {
 	}
 	// First run fails when file is created.
 	err = getPageStringToFile(t.Name())
-	travis := len(os.Getenv("TRAVIS_GO_VERSION")) != 0
-	if err != nil && !travis && !strings.Contains(fmt.Sprintf("%v", err), "want file is larger by") {
+	if err != nil && !strings.Contains(fmt.Sprintf("%v", err), "want file is larger by") {
 		t.Error(err)
 	}
 	if err := os.Remove(t.Name()); err != nil {
