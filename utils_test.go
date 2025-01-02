@@ -465,7 +465,7 @@ func TestStringToFilePanicContent(t *testing.T) {
 		if err == nil || !os.IsPermission(err.(error)) {
 			t.Skipf("On some configurations, read-only directories are unavailable.\n"+
 				"On Windows, see https://github.com/golang/go/issues/35042\n"+
-				"Error %s is nil or not a permission error", err)
+				"Error %v is nil or not a permission error", err)
 		}
 	}()
 	err := os.Mkdir("willpanic", 0500) // Read only dir
