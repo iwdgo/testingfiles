@@ -1,0 +1,6 @@
+pkg syscall, const BIOCGDLTLIST = 3221766779
+pkg syscall, const BIOCGRTIMEOUT = 1074545262
+pkg syscall, const BIOCSETF = 2148024935
+pkg syscall, const BIOCSETWF = 2148024951
+pkg syscall, const BIOCSRTIMEOUT = 2148287085
+pkg syscall, const ETHERTYPE_PAE = 34958
