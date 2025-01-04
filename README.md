@@ -84,6 +84,25 @@ Testing can be online or offline.
 Online is used to read a reference page. 
 Offline requires to provide the reference file.
 
+# Common files
+
+A first method allows to extract common lines between files selected using a glob pattern.
+A second method removes common lines from each file.
+
+```
+    // Extract all common features from Linux ports
+	p := filepath.Join(os.Getenv("GOROOT"), "/api/refs")
+	gf := "z_syscall_linux_*.txt"
+	baseline := "z_syscall_linux.txt"
+	if err := ExtractCommon(p, gf, baseline); err != nil {
+		log.Fatal(err)
+	}
+	if err := CreateSupplements(p, gf, baseline); err != nil {
+		log.Fatal(err)
+	}
+```
+# Good to know
+
 Other examples are available in modules of [largeoutput](https://github.com/iwdgo/largeoutput) repository.
 
 Benchmarking between string and bytes.Buffer is inconclusive inline with documented behavior.
