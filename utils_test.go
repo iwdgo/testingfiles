@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -79,7 +80,9 @@ func TestMain(m *testing.M) {
 // The error is used for the test and this method by the Benchmark
 func getPageStringToFile(name string) error {
 	// got file is identical to want file - no page update
-	StringToFile(name, wantb)
+	if err := os.WriteFile(name, wantb, fs.ModePerm); err != nil {
+		panic(err)
+	}
 	return FileCompare(name, wantf) // second element is the func name
 }
 
@@ -286,7 +289,9 @@ func recoverFileSystem(t *testing.T) {
 
 func TestStringToFilePanicFilename(t *testing.T) {
 	defer recoverFileSystem(t)
-	StringToFile("", nil)
+	if err := os.WriteFile("", nil, fs.ModePerm); err != nil {
+		panic(err)
+	}
 	t.Errorf("StringToFile did not panic")
 }
 

@@ -32,6 +32,8 @@ func OutputDir(s string) {
 }
 
 // StringToFile produces a file named fname with the content
+//
+// Deprecated: use the os package [os] instead; see [WriteFile].
 func StringToFile(fname string, content []byte) {
 	wfile, err := os.Create(fname)
 	if err != nil {
