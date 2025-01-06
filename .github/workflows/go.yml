@@ -5,6 +5,7 @@ jobs:
   build:
     name: Build
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
 
@@ -15,6 +16,8 @@ jobs:
 
       - name: Set up Go
         uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.18.0'
 
       - name: Complete Go set up
         shell: bash
