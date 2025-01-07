@@ -447,7 +447,7 @@ func TestReadCloserCompareDifference(t *testing.T) {
 	if err := ReadCloserCompare(io.NopCloser(b), "afile"); !strings.Contains(fmt.Sprint(err),
 		`got response is too long by 0. Last read byte`) {
 		fn := "TestReadCloserCompareDifference"
-		if fs, errf := os.Stat(fn); errf == nil && fs.Size() == 0 {
+		if fstat, errf := os.Stat(fn); errf == nil && fstat.Size() == 0 {
 			_ = os.Remove(fn)
 		}
 		t.Errorf("%v", err)
