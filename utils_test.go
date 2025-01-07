@@ -18,11 +18,12 @@ import (
 )
 
 const (
-	techName = "Google"
-	myTech   = "MyTech"
-	wantf    = "originalpage.html"
-	updatedf = "updatedpage.html"
-	wd       = "output"
+	techName         = "Google"
+	myTech           = "MyTech"
+	wantf            = "originalpage.html"
+	updatedf         = "updatedpage.html"
+	wd               = "output"
+	errNotPermission = `read-only directory is unavailable (for windows, see https://github.com/golang/go/issues/35042)\n`
 )
 
 // Only one read on the network or filled with the existing want file
@@ -56,11 +57,11 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			log.Fatalf("%v\n", err)
 		}
-		fs, err := os.Stat(wantf)
+		fstat, err := os.Stat(wantf)
 		if err != nil {
 			log.Fatalf("%v\n", err)
 		}
-		wantb = make([]byte, fs.Size())
+		wantb = make([]byte, fstat.Size())
 		n, err := f.Read(wantb)
 		if err != nil {
 			log.Fatalf("%v\n", err)
@@ -468,9 +469,8 @@ func TestStringToFilePanicContent(t *testing.T) {
 	defer func() {
 		err := recover()
 		if err == nil || !os.IsPermission(err.(error)) {
-			t.Skipf("On some configurations, read-only directories are unavailable.\n"+
-				"On Windows, see https://github.com/golang/go/issues/35042\n"+
-				"Error %v is nil or not a permission error", err)
+			t.Log(errNotPermission)
+			t.Skipf("got %v, want %v", err, fs.ErrPermission)
 		}
 	}()
 	err := os.Mkdir("willpanic", 0500) // Read only dir
